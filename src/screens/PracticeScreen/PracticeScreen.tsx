@@ -6,6 +6,7 @@ import { useHUDStore, usePracticeTimer } from "@features/hud";
 import type { PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
+import { CameraPreview } from "@widgets/CameraPreview";
 import { HUDOverlay } from "@widgets/HUDOverlay";
 
 const getSessionId = (id: string | string[] | undefined): string =>
@@ -130,17 +131,8 @@ export function PracticeScreen() {
         </div>
       </header>
 
-      <section className="absolute inset-x-5 bottom-5 top-20 rounded-2xl border border-border bg-surface">
-        <div className="flex h-full items-center justify-center">
-          <div className="max-w-md px-6 text-center opacity-75">
-            <p className="text-lg font-semibold text-text-secondary">
-              Camera preview area
-            </p>
-            <p className="mt-3 text-sm leading-6 text-text-muted">
-              HUD guidance stays outside your speaking focus.
-            </p>
-          </div>
-        </div>
+      <section className="absolute inset-x-5 bottom-5 top-20 overflow-hidden rounded-2xl border border-border bg-surface">
+        <CameraPreview className="h-full w-full" />
       </section>
 
       <HUDOverlay

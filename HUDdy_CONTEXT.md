@@ -4,7 +4,7 @@
 
 HUDdy is an AI speaking navigator for English presentation practice. The product helps a speaker rehearse with a quiet on-screen HUD that shows the current keyword, subtle timing, breath, and flow cues while keeping the center speaking area visually calm.
 
-The current product is a P0 placeholder MVP. It validates the end-to-end practice flow and HUD interaction model before adding camera, recording, speech analysis, or backend systems.
+The product has completed the P0 placeholder MVP and the P0-B camera self-view milestone. UI/UX polish and keyword progress tracking are also complete.
 
 ## Current Completed Scope
 
@@ -28,7 +28,7 @@ The P0 flow supports:
 - Generating mock keyword cards.
 - Reviewing and editing keyword cards.
 - Generating a mock Breath Script.
-- Practicing with a camera placeholder and HUD overlay.
+- Practicing with a live camera self-view (getUserMedia, browser-only, no recording) and HUD overlay.
 - Advancing one keyword at a time.
 - Running a practice timer.
 - Completing practice and navigating to a report.
@@ -64,8 +64,8 @@ The P0 flow supports:
 - Do not use Zustand persist, `createJSONStorage`, or `skipHydration` in P0.
 - Do not persist HUD runtime state.
 - Do not put timer side effects in `useHUDStore`.
-- Do not add camera or `getUserMedia` yet.
-- Do not add recorder, audio capture, STT, or MediaPipe yet.
+- Camera self-view (getUserMedia, `video` only, `audio: false`) is now part of P0-B scope and is implemented.
+- Do not add recorder, audio capture, STT, or MediaPipe.
 - Do not add backend, auth, DB, or payment.
 - Do not add shadcn/ui.
 - Do not use TypeScript `any`.
@@ -114,7 +114,7 @@ The P0 flow supports:
 - Prepare Step 3 navigates to Practice.
 - Practice handles missing session safely.
 - Practice initializes HUD runtime state from a valid `PracticeSession`.
-- Practice shows a camera placeholder, not a real camera feed.
+- Practice shows a live camera self-view via `getUserMedia` (`video` only, `audio: false`, no recording, no upload). Camera is entirely browser-local. If denied or unavailable, the practice room remains fully usable.
 - Practice shows the HUD overlay.
 - Practice shows only the current keyword, not the full script.
 - Practice timer increments through `usePracticeTimer`.
@@ -124,6 +124,7 @@ The P0 flow supports:
 - Report saves the report and marks the `PracticeSession` as completed.
 - Report sets `completedAt` and updates `updatedAt`.
 - Report can be reopened without regenerating saved report data.
+- Report keyword progress shows real count from HUD runtime state (not `card.isUsed`, which is never set in P0).
 - Progress reads completed sessions from storage.
 - Progress shows completed sessions and routes them to saved reports.
 - Empty or corrupted local storage is handled with safe fallbacks.
@@ -132,7 +133,7 @@ The P0 flow supports:
 
 - Do not change the P0 placeholder MVP scope into a real capture or analysis product yet.
 - Do not add real AI APIs.
-- Do not add camera, recording, audio, STT, or MediaPipe.
+- Do not add recording, audio capture, STT, or MediaPipe.
 - Do not add backend persistence.
 - Do not add auth, DB, or payment.
 - Do not add shadcn/ui.
@@ -143,14 +144,18 @@ The P0 flow supports:
 - Do not introduce `src/pages`.
 - Do not modify `SPEC.md`, `BRAND_GUIDE.md`, `MASTER_PLAN.md`, `skills/`, or `report/` unless a future task explicitly requests it.
 
-## Recommended Next Phase
+## Completed Milestones
 
-Next recommended phase: UI/UX review first, then camera self-view.
+- **P0 placeholder MVP** — full practice flow, mock AI, local storage, HUD overlay.
+- **UI/UX polish** — route navigation, visual hierarchy, empty states.
+- **Keyword progress patch** — ReportScreen reads HUD runtime state to compute real keyword count.
+- **P0-B camera self-view** — `getUserMedia` live preview in PracticeScreen, browser-only, no recording.
+
+## Recommended Next Phase
 
 Suggested order:
 
-1. Run a focused UI/UX review of the completed P0 placeholder MVP.
-2. Tighten visual hierarchy, accessibility, empty states, and mobile fit only where needed.
-3. Preserve the calm HUD principle: one current keyword, low-emphasis subtitle, non-aggressive cue, and mostly empty center area.
-4. After UI/UX review, add camera self-view as a separate phase.
-5. Keep recording, audio, STT, MediaPipe, backend, auth, DB, and payment out of scope until later phases.
+1. P1: Real speech-to-text transcription (Web Speech API or Whisper).
+2. P1: Keyword detection against live transcript.
+3. P1: Auto-advance keyword on detection.
+4. Keep recording, audio upload, MediaPipe, backend, auth, DB, and payment out of scope until later phases.

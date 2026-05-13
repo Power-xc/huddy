@@ -21,12 +21,30 @@ export function ReportScreen() {
   const router = useRouter();
   const practiceSessionId = useMemo(() => getSessionId(params.id), [params.id]);
   const hudState = useHUDStore((state) => state.hudState);
+  const hudKeywordCards = useHUDStore((state) => state.keywordCards);
+  const allKeywordsCompleted = useHUDStore((state) => state.allKeywordsCompleted);
   const [practiceSession, setPracticeSession] =
     useState<PracticeSession | null>(null);
   const [loadState, setLoadState] = useState<ReportLoadState>("loading");
 
   const elapsedSec =
     hudState?.sessionId === practiceSessionId ? hudState.elapsedSec : 0;
+
+  // HUD 런타임 상태에서 실제 키워드 진행 수를 읽는다. isUsed 플래그는 P0에서 갱신되지 않으므로
+  // currentKeywordIndex + allKeywordsCompleted 기반으로 계산한다.
+  const isHUDForThisSession =
+    hudState?.sessionId === practiceSessionId && hudKeywordCards.length > 0;
+  const computedKeywordsUsedCount = isHUDForThisSession
+    ? allKeywordsCompleted
+      ? hudKeywordCards.length
+      : Math.max(
+          0,
+          Math.min(
+            (hudState?.currentKeywordIndex ?? 0) + 1,
+            hudKeywordCards.length,
+          ),
+        )
+    : 0;
 
   useEffect(() => {
     let isActive = true;
@@ -65,6 +83,8 @@ export function ReportScreen() {
         const report = {
           ...generatedReport,
           actualDurationSec: elapsedSec,
+          // isUsed가 P0에서 갱신되지 않으므로 HUD 런타임 값으로 덮어쓴다.
+          keywordsUsedCount: computedKeywordsUsedCount,
         };
         const updatedPracticeSession = storage.updateSession(
           storedPracticeSession.id,
@@ -100,7 +120,7 @@ export function ReportScreen() {
     return () => {
       isActive = false;
     };
-  }, [elapsedSec, practiceSessionId]);
+  }, [computedKeywordsUsedCount, elapsedSec, practiceSessionId]);
 
   if (loadState === "loading" || loadState === "generating") {
     return (
@@ -137,7 +157,9 @@ export function ReportScreen() {
   }
 
   const report = practiceSession.report;
-  const hasKeywordProgress = (report?.keywordsUsedCount ?? 0) > 0;
+  const totalKeywordsInSession = practiceSession.keywordCards.length;
+  const hasKeywordProgress =
+    (report?.keywordsUsedCount ?? 0) > 0 && totalKeywordsInSession > 0;
 
   if (!report || loadState === "error") {
     return (
@@ -226,6 +248,9 @@ export function ReportScreen() {
             {hasKeywordProgress ? (
               <p className="mt-2 font-mono text-2xl font-semibold text-text">
                 {report.keywordsUsedCount}
+                <span className="ml-1 font-mono text-base font-normal text-text-secondary">
+                  / {totalKeywordsInSession}
+                </span>
               </p>
             ) : (
               <p className="mt-2 text-sm font-medium text-text-muted">
