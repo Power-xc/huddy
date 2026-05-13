@@ -23,8 +23,17 @@ export function PracticeScreen() {
   const allKeywordsCompleted = useHUDStore(
     (state) => state.allKeywordsCompleted,
   );
+  const hudMode = useHUDStore((state) => state.hudMode);
+  const currentBreathCueIndex = useHUDStore(
+    (state) => state.currentBreathCueIndex,
+  );
+  const allBreathCuesCompleted = useHUDStore(
+    (state) => state.allBreathCuesCompleted,
+  );
   const startSession = useHUDStore((state) => state.startSession);
   const nextKeyword = useHUDStore((state) => state.nextKeyword);
+  const nextBreathCue = useHUDStore((state) => state.nextBreathCue);
+  const setHudMode = useHUDStore((state) => state.setHudMode);
   const endSession = useHUDStore((state) => state.endSession);
   const resetHUD = useHUDStore((state) => state.reset);
 
@@ -46,6 +55,9 @@ export function PracticeScreen() {
 
       if (storedSession) {
         startSession(storedSession.id, storedSession.keywordCards);
+        const hasBreathScript =
+          (storedSession.breathScript?.segments.length ?? 0) > 0;
+        setHudMode(hasBreathScript ? "breath" : "keyword");
       } else {
         resetHUD();
       }
@@ -58,7 +70,7 @@ export function PracticeScreen() {
     return () => {
       isActive = false;
     };
-  }, [resetHUD, sessionId, startSession]);
+  }, [resetHUD, sessionId, setHudMode, startSession]);
 
   if (!isLoaded) {
     return (
@@ -98,6 +110,7 @@ export function PracticeScreen() {
   const currentCard = allKeywordsCompleted
     ? null
     : keywordCards[currentKeywordIndex] ?? null;
+  const breathSegments = session.breathScript?.segments ?? [];
 
   const handleCompletePractice = () => {
     if (!isSessionEnded) {
@@ -136,10 +149,15 @@ export function PracticeScreen() {
       </section>
 
       <HUDOverlay
+        allBreathCuesCompleted={allBreathCuesCompleted}
         allKeywordsCompleted={allKeywordsCompleted}
+        breathSegments={breathSegments}
+        currentBreathCueIndex={currentBreathCueIndex}
         currentCard={currentCard}
         currentKeywordIndex={currentKeywordIndex}
         elapsedSec={elapsedSec}
+        hudMode={hudMode}
+        onNextBreathCue={() => nextBreathCue(breathSegments.length)}
         onNextKeyword={nextKeyword}
         subtitleLabel="..."
         targetDurationMin={session.targetDurationMin}

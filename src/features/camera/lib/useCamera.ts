@@ -65,16 +65,6 @@ export function useCamera(): UseCameraResult {
       });
 
       streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        try {
-          await videoRef.current.play();
-        } catch {
-          // autoPlay 속성으로 처리되므로 play() 실패는 무시한다.
-        }
-      }
-
       setStatus("ready");
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -103,6 +93,14 @@ export function useCamera(): UseCameraResult {
   const toggleMirror = useCallback(() => {
     setIsMirrored((prev) => !prev);
   }, []);
+
+  // status가 ready로 바뀐 뒤 <video>가 마운트되면 srcObject를 연결한다.
+  // startCamera 시점엔 <video>가 DOM에 없으므로 여기서 연결해야 한다.
+  useEffect(() => {
+    if (status === "ready" && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [status]);
 
   // 언마운트 시 스트림을 반드시 정리해 브라우저 카메라 점유를 해제한다.
   useEffect(() => {

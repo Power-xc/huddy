@@ -1,5 +1,6 @@
-import type { KeywordCard } from "@shared/types";
+import type { BreathSegment, KeywordCard } from "@shared/types";
 import { GlassCard } from "@shared/ui";
+import { HUDBreathCue } from "./HUDBreathCue";
 import { HUDCuePlaceholder } from "./HUDCuePlaceholder";
 import { HUDKeywordCard } from "./HUDKeywordCard";
 import { HUDSubtitle } from "./HUDSubtitle";
@@ -17,6 +18,11 @@ export type HUDOverlayProps = {
   totalKeywords?: number;
   onNextKeyword?: () => void;
   allKeywordsCompleted?: boolean;
+  hudMode?: "keyword" | "breath";
+  breathSegments?: BreathSegment[];
+  currentBreathCueIndex?: number;
+  allBreathCuesCompleted?: boolean;
+  onNextBreathCue?: () => void;
 };
 
 export function HUDOverlay({
@@ -31,6 +37,11 @@ export function HUDOverlay({
   totalKeywords,
   onNextKeyword,
   allKeywordsCompleted = false,
+  hudMode,
+  breathSegments,
+  currentBreathCueIndex = 0,
+  allBreathCuesCompleted = false,
+  onNextBreathCue,
 }: HUDOverlayProps) {
   const shouldRenderKeywordCard =
     Boolean(onNextKeyword) ||
@@ -43,6 +54,10 @@ export function HUDOverlay({
     ? totalCount
     : currentKeywordIndex;
 
+  const activeBreathSegments = breathSegments ?? [];
+  const showBreathMode =
+    hudMode === "breath" && activeBreathSegments.length > 0;
+
   return (
     <div className="pointer-events-none absolute inset-0 z-10">
       {/* 컨테이너는 클릭을 통과시키고, 실제 조작이 필요한 HUD 패널만 pointer-events를 되살린다. */}
@@ -50,7 +65,14 @@ export function HUDOverlay({
         className="pointer-events-auto absolute left-1/2 w-[min(520px,calc(100vw-(var(--hud-safe-x)*2)))] -translate-x-1/2"
         style={{ top: "var(--hud-safe-top)" }}
       >
-        {shouldRenderKeywordCard ? (
+        {showBreathMode ? (
+          <HUDBreathCue
+            allCompleted={allBreathCuesCompleted}
+            currentIndex={currentBreathCueIndex}
+            onNext={onNextBreathCue ?? (() => undefined)}
+            segments={activeBreathSegments}
+          />
+        ) : shouldRenderKeywordCard ? (
           <HUDKeywordCard
             currentCard={cardForDisplay}
             currentIndex={indexForDisplay}

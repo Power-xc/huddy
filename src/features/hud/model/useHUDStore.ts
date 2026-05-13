@@ -1,16 +1,23 @@
 import { create } from "zustand";
 import type { HUDState, KeywordCard } from "@shared/types";
 
+export type HudMode = "keyword" | "breath";
+
 export type HUDStoreState = {
   hudState: HUDState | null;
   keywordCards: KeywordCard[];
   allKeywordsCompleted: boolean;
+  hudMode: HudMode;
+  currentBreathCueIndex: number;
+  allBreathCuesCompleted: boolean;
   startSession: (sessionId: string, keywordCards: KeywordCard[]) => void;
   nextKeyword: () => void;
   pauseResume: () => void;
   tick: () => void;
   endSession: () => void;
   reset: () => void;
+  nextBreathCue: (totalCues: number) => void;
+  setHudMode: (mode: HudMode) => void;
 };
 
 const createInitialHUDState = (sessionId: string): HUDState => ({
@@ -26,12 +33,18 @@ export const useHUDStore = create<HUDStoreState>((set) => ({
   hudState: null,
   keywordCards: [],
   allKeywordsCompleted: false,
+  hudMode: "keyword",
+  currentBreathCueIndex: 0,
+  allBreathCuesCompleted: false,
 
   startSession: (sessionId, keywordCards) =>
     set({
       hudState: createInitialHUDState(sessionId),
       keywordCards: [...keywordCards],
       allKeywordsCompleted: false,
+      hudMode: "keyword",
+      currentBreathCueIndex: 0,
+      allBreathCuesCompleted: false,
     }),
 
   nextKeyword: () =>
@@ -120,5 +133,23 @@ export const useHUDStore = create<HUDStoreState>((set) => ({
       hudState: null,
       keywordCards: [],
       allKeywordsCompleted: false,
+      hudMode: "keyword",
+      currentBreathCueIndex: 0,
+      allBreathCuesCompleted: false,
     }),
+
+  nextBreathCue: (totalCues) =>
+    set((state) => {
+      if (state.allBreathCuesCompleted || totalCues === 0) {
+        return state;
+      }
+
+      if (state.currentBreathCueIndex < totalCues - 1) {
+        return { currentBreathCueIndex: state.currentBreathCueIndex + 1 };
+      }
+
+      return { allBreathCuesCompleted: true };
+    }),
+
+  setHudMode: (mode) => set({ hudMode: mode }),
 }));
