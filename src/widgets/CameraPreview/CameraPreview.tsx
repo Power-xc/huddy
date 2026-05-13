@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useCamera } from "@features/camera";
 import { Button } from "@shared/ui";
 
@@ -18,12 +17,6 @@ export function CameraPreview({ className }: CameraPreviewProps) {
     stopCamera,
     toggleMirror,
   } = useCamera();
-
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, [stopCamera]);
 
   if (status === "idle") {
     return (
@@ -51,7 +44,7 @@ export function CameraPreview({ className }: CameraPreviewProps) {
       <div
         className={`flex h-full items-center justify-center ${className ?? ""}`}
       >
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-text-secondary">
           카메라 권한을 요청하는 중입니다...
         </p>
       </div>
@@ -64,7 +57,7 @@ export function CameraPreview({ className }: CameraPreviewProps) {
         className={`flex h-full flex-col items-center justify-center gap-4 ${className ?? ""}`}
       >
         <div className="max-w-md px-6 text-center">
-          <p className="text-sm leading-6 text-text-muted">
+          <p className="text-sm leading-6 text-text-secondary">
             카메라 권한이 거부되었습니다. 브라우저 설정에서 권한을
             허용해주세요.
           </p>
@@ -81,7 +74,7 @@ export function CameraPreview({ className }: CameraPreviewProps) {
       <div
         className={`flex h-full items-center justify-center ${className ?? ""}`}
       >
-        <p className="max-w-md px-6 text-center text-sm leading-6 text-text-muted">
+        <p className="max-w-md px-6 text-center text-sm leading-6 text-text-secondary">
           사용 가능한 카메라를 찾을 수 없습니다.
         </p>
       </div>
@@ -94,7 +87,7 @@ export function CameraPreview({ className }: CameraPreviewProps) {
         className={`flex h-full flex-col items-center justify-center gap-4 ${className ?? ""}`}
       >
         <div className="max-w-md px-6 text-center">
-          <p className="text-sm leading-6 text-text-muted">
+          <p className="text-sm leading-6 text-text-secondary">
             {errorMessage ?? "카메라를 시작할 수 없습니다."}
           </p>
         </div>

@@ -27,25 +27,6 @@ export function ReportScreen() {
     useState<PracticeSession | null>(null);
   const [loadState, setLoadState] = useState<ReportLoadState>("loading");
 
-  const elapsedSec =
-    hudState?.sessionId === practiceSessionId ? hudState.elapsedSec : 0;
-
-  // HUD 런타임 상태에서 실제 키워드 진행 수를 읽는다. isUsed 플래그는 P0에서 갱신되지 않으므로
-  // currentKeywordIndex + allKeywordsCompleted 기반으로 계산한다.
-  const isHUDForThisSession =
-    hudState?.sessionId === practiceSessionId && hudKeywordCards.length > 0;
-  const computedKeywordsUsedCount = isHUDForThisSession
-    ? allKeywordsCompleted
-      ? hudKeywordCards.length
-      : Math.max(
-          0,
-          Math.min(
-            (hudState?.currentKeywordIndex ?? 0) + 1,
-            hudKeywordCards.length,
-          ),
-        )
-    : 0;
-
   useEffect(() => {
     let isActive = true;
 
@@ -79,12 +60,29 @@ export function ReportScreen() {
           return;
         }
 
+        const actualDurationSec =
+          hudState?.sessionId === practiceSessionId ? hudState.elapsedSec : 0;
+        const isForThisSession =
+          hudState?.sessionId === practiceSessionId &&
+          hudKeywordCards.length > 0;
+        // isUsed 플래그는 P0에서 갱신되지 않으므로 HUD 런타임 값으로 계산한다.
+        const keywordsUsedCount = isForThisSession
+          ? allKeywordsCompleted
+            ? hudKeywordCards.length
+            : Math.max(
+                0,
+                Math.min(
+                  (hudState?.currentKeywordIndex ?? 0) + 1,
+                  hudKeywordCards.length,
+                ),
+              )
+          : 0;
+
         const completedAt = new Date().toISOString();
         const report = {
           ...generatedReport,
-          actualDurationSec: elapsedSec,
-          // isUsed가 P0에서 갱신되지 않으므로 HUD 런타임 값으로 덮어쓴다.
-          keywordsUsedCount: computedKeywordsUsedCount,
+          actualDurationSec,
+          keywordsUsedCount,
         };
         const updatedPracticeSession = storage.updateSession(
           storedPracticeSession.id,
@@ -120,7 +118,11 @@ export function ReportScreen() {
     return () => {
       isActive = false;
     };
-  }, [computedKeywordsUsedCount, elapsedSec, practiceSessionId]);
+    // hudState/hudKeywordCards/allKeywordsCompleted are intentionally excluded:
+    // the effect must run once per session, capturing HUD values at generation
+    // time. Including them would re-run generation when Zustand resets on reopen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [practiceSessionId]);
 
   if (loadState === "loading" || loadState === "generating") {
     return (
