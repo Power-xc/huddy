@@ -11,7 +11,6 @@ export type HUDOverlayProps = {
   elapsedLabel?: string;
   elapsedSec?: number;
   targetDurationMin?: number;
-  cueLabel?: string;
   subtitleLabel?: string;
   currentCard?: KeywordCard | null;
   currentKeywordIndex?: number;
@@ -26,7 +25,6 @@ export function HUDOverlay({
   elapsedLabel = "00:00",
   elapsedSec,
   targetDurationMin,
-  cueLabel = "pace / breath",
   subtitleLabel = "subtitle placeholder",
   currentCard,
   currentKeywordIndex = 0,
@@ -99,7 +97,7 @@ export function HUDOverlay({
           right: "var(--hud-safe-x)",
         }}
       >
-        <HUDCuePlaceholder label={cueLabel} />
+        <HUDCuePlaceholder />
       </div>
 
       <div

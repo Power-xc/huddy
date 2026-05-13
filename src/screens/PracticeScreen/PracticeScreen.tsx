@@ -116,32 +116,28 @@ export function PracticeScreen() {
     >
       <header className="absolute left-0 right-0 top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-4">
         <div className="justify-self-start">
-          <Button
-            onClick={() => router.push(`/session/${session.id}/prepare`)}
-            variant="ghost"
-          >
-            Prepare
-          </Button>
+          <p className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary">
+            Practice
+          </p>
         </div>
         <h1 className="max-w-lg truncate text-center font-heading text-lg font-semibold text-text">
           {session.title}
         </h1>
         <div className="justify-self-end">
-          <Button onClick={handleCompletePractice} variant="ghost">
-            완료
+          <Button onClick={handleCompletePractice} variant="secondary">
+            완료하고 리포트
           </Button>
         </div>
       </header>
 
       <section className="absolute inset-x-5 bottom-5 top-20 rounded-2xl border border-border bg-surface">
         <div className="flex h-full items-center justify-center">
-          {/* P0에서는 실제 카메라 연결 전에 HUD 배치와 안전 영역을 먼저 검증한다. */}
-          <div className="max-w-md px-6 text-center">
-            <p className="text-lg font-semibold text-text">
-              Camera preview will appear here
+          <div className="max-w-md px-6 text-center opacity-75">
+            <p className="text-lg font-semibold text-text-secondary">
+              Camera preview area
             </p>
-            <p className="mt-3 text-sm leading-6 text-text-secondary">
-              P0에서는 카메라 연결 전 HUD 구조를 먼저 검증합니다.
+            <p className="mt-3 text-sm leading-6 text-text-muted">
+              HUD guidance stays outside your speaking focus.
             </p>
           </div>
         </div>
@@ -149,7 +145,6 @@ export function PracticeScreen() {
 
       <HUDOverlay
         allKeywordsCompleted={allKeywordsCompleted}
-        cueLabel="pace · breath"
         currentCard={currentCard}
         currentKeywordIndex={currentKeywordIndex}
         elapsedSec={elapsedSec}

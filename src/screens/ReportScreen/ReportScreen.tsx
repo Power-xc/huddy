@@ -137,6 +137,7 @@ export function ReportScreen() {
   }
 
   const report = practiceSession.report;
+  const hasKeywordProgress = (report?.keywordsUsedCount ?? 0) > 0;
 
   if (!report || loadState === "error") {
     return (
@@ -192,6 +193,14 @@ export function ReportScreen() {
 
       <ReportSummary session={practiceSession} />
 
+      <GlassCard className="grid gap-3 p-6">
+        <p className="text-sm font-medium text-primary">Next route</p>
+        <h2 className="text-xl font-semibold text-text">다음 주 미션</h2>
+        <p className="leading-7 text-text-secondary">
+          {report.nextWeekMission}
+        </p>
+      </GlassCard>
+
       <GlassCard className="grid gap-5 p-6">
         <div>
           <h2 className="text-xl font-semibold text-text">한 줄 피드백</h2>
@@ -213,10 +222,16 @@ export function ReportScreen() {
             </p>
           </div>
           <div>
-            <p className="text-sm text-text-secondary">사용 키워드</p>
-            <p className="mt-2 font-mono text-2xl font-semibold text-text">
-              {report.keywordsUsedCount}
-            </p>
+            <p className="text-sm text-text-secondary">키워드 진행</p>
+            {hasKeywordProgress ? (
+              <p className="mt-2 font-mono text-2xl font-semibold text-text">
+                {report.keywordsUsedCount}
+              </p>
+            ) : (
+              <p className="mt-2 text-sm font-medium text-text-muted">
+                키워드 진행 기록 없음
+              </p>
+            )}
           </div>
           <div>
             <p className="text-sm text-text-secondary">리포트 생성</p>
@@ -268,12 +283,6 @@ export function ReportScreen() {
               </span>
             ))}
           </div>
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold text-text">다음 주 미션</h2>
-          <p className="mt-3 leading-7 text-text-secondary">
-            {report.nextWeekMission}
-          </p>
         </div>
       </GlassCard>
     </main>

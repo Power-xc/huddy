@@ -78,7 +78,7 @@ export function ProgressPage() {
             12주 진행 현황
           </h1>
           <p className="mt-3 text-text-secondary">
-            매주 하나의 주제로 영어 발표 루틴을 쌓습니다.
+            매주 하나의 주제로 발표 route를 완주합니다.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -96,7 +96,7 @@ export function ProgressPage() {
 
       <GlassCard className="flex flex-col gap-5 p-6">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-text">Week Grid</h2>
+          <h2 className="text-xl font-semibold text-text">12-week route</h2>
           <p className="font-mono text-sm text-text-secondary">
             Week {config.currentWeek} / 12
           </p>
@@ -105,7 +105,7 @@ export function ProgressPage() {
       </GlassCard>
 
       <GlassCard className="flex flex-col gap-4 p-6">
-        <h2 className="text-xl font-semibold text-text">완료된 발표</h2>
+        <h2 className="text-xl font-semibold text-text">완료된 route</h2>
         {completedSessions.length > 0 ? (
           <div className="grid gap-3">
             {completedSessions.map((session) => (
@@ -117,7 +117,7 @@ export function ProgressPage() {
               >
                 <span className="font-medium text-text">{session.title}</span>
                 <span className="text-sm text-text-secondary">
-                  Week {session.weekNumber}
+                  Route completed · Week {session.weekNumber}
                 </span>
               </button>
             ))}

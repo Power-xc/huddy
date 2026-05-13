@@ -7,4 +7,3 @@ export type { HUDTimerProps } from "./HUDTimer";
 export { HUDSubtitle } from "./HUDSubtitle";
 export type { HUDSubtitleProps } from "./HUDSubtitle";
 export { HUDCuePlaceholder } from "./HUDCuePlaceholder";
-export type { HUDCuePlaceholderProps } from "./HUDCuePlaceholder";
