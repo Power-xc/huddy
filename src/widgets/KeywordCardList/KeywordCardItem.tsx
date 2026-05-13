@@ -26,7 +26,9 @@ export function KeywordCardItem({
             {card.order}
           </span>
           <div>
-            <p className="text-sm text-text-secondary">Keyword</p>
+            <p className="text-sm font-medium text-text-secondary">
+              Route stop {card.order}
+            </p>
             <p className="text-sm text-text-muted">{card.hintKo}</p>
           </div>
         </div>
@@ -51,6 +53,7 @@ export function KeywordCardItem({
       </div>
       <input
         className="min-h-11 rounded-lg border border-border bg-surface px-4 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        aria-label={`Route stop ${card.order} keyword`}
         onChange={(event) => onKeywordChange(card.id, event.target.value)}
         value={card.keyword}
       />

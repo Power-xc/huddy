@@ -47,7 +47,7 @@ export function WeekCell({
       <span className="text-sm font-medium text-text-secondary">Week</span>
       <span className="text-2xl font-semibold">{weekNumber}</span>
       <span className="text-xs text-text-muted">
-        {sessionCount > 0 ? `${sessionCount}회` : "준비 전"}
+        {sessionCount > 0 ? "Route completed" : "준비 전"}
       </span>
     </button>
   );

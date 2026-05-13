@@ -43,9 +43,20 @@ export function HUDKeywordCard({
     <GlassCard className="grid gap-3 px-5 py-4 text-center">
       {/* 한 번에 하나만 보여 발표자가 화면을 읽는 대신 현재 cue만 확인하도록 한다. */}
       <div>
-        <p className="font-mono text-xs text-text-secondary">
-          {currentIndex + 1} / {totalCount}
+        <p className="font-mono text-xs uppercase text-text-secondary">
+          Route {currentIndex + 1} / {totalCount}
         </p>
+        <div className="mx-auto mt-2 flex w-40 items-center justify-center gap-1">
+          {Array.from({ length: totalCount }, (_, index) => (
+            <span
+              className={[
+                "h-1 rounded-full transition-colors",
+                index === currentIndex ? "w-8 bg-primary" : "w-4 bg-border",
+              ].join(" ")}
+              key={index}
+            />
+          ))}
+        </div>
         <p className="mt-1 truncate font-heading text-2xl font-semibold text-primary">
           {currentCard.keyword}
         </p>
