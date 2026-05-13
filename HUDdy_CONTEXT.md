@@ -4,11 +4,11 @@
 
 HUDdy is an AI speaking navigator for English presentation practice. The product helps a speaker rehearse with a quiet on-screen HUD that shows the current keyword, subtle timing, breath, and flow cues while keeping the center speaking area visually calm.
 
-The product has completed the P0 placeholder MVP and the P0-B camera self-view milestone. UI/UX polish and keyword progress tracking are also complete.
+The product has completed the P0 placeholder MVP, the P0-B camera self-view milestone, and the Breath Script HUD Mode. UI/UX polish and keyword progress tracking are also complete.
 
 ## Current Completed Scope
 
-T01 through T24 are complete.
+T01 through T24 are complete. Camera self-view reliability fix and Breath Script HUD Mode are also complete.
 
 The complete P0 placeholder MVP flow is implemented:
 
@@ -29,13 +29,22 @@ The P0 flow supports:
 - Reviewing and editing keyword cards.
 - Generating a mock Breath Script.
 - Practicing with a live camera self-view (getUserMedia, browser-only, no recording) and HUD overlay.
-- Advancing one keyword at a time.
+- HUD auto-selects Breath Script mode when a `breathScript` with segments exists; falls back to Keyword mode otherwise.
+- In Breath Script mode: shows current phrase (NOW), optional next phrase preview (NEXT), pause chip when `isBreathPoint`, Cue X/Y progress dots, and manual "다음 cue" advance.
+- Advancing one keyword at a time (Keyword mode) or one cue at a time (Breath Script mode).
 - Running a practice timer.
 - Completing practice and navigating to a report.
 - Generating a mock report if one does not already exist.
 - Saving completed status and report data.
 - Showing completed sessions on Home and Progress.
 - Reopening a completed report without regenerating it.
+
+## HUD Mode Selection
+
+- `useHUDStore` tracks `hudMode: "keyword" | "breath"`, `currentBreathCueIndex`, and `allBreathCuesCompleted` as runtime state.
+- `PracticeScreen` calls `setHudMode("breath")` after `startSession` when `session.breathScript?.segments.length > 0`; defaults to "keyword" otherwise.
+- `HUDOverlay` conditionally renders `HUDBreathCue` (breath mode) or `HUDKeywordCard` (keyword mode) in the top-center safe zone.
+- `nextBreathCue(totalCues)` advances the cue index; sets `allBreathCuesCompleted` when the last cue is reached.
 
 ## Current Architecture Decisions
 
@@ -149,7 +158,8 @@ The P0 flow supports:
 - **P0 placeholder MVP** — full practice flow, mock AI, local storage, HUD overlay.
 - **UI/UX polish** — route navigation, visual hierarchy, empty states.
 - **Keyword progress patch** — ReportScreen reads HUD runtime state to compute real keyword count.
-- **P0-B camera self-view** — `getUserMedia` live preview in PracticeScreen, browser-only, no recording.
+- **P0-B camera self-view** — `getUserMedia` live preview in PracticeScreen, browser-only, no recording. Camera `srcObject` reliability fix: `videoRef.current` is assigned via `useEffect([status])` after `<video>` mounts.
+- **Breath Script HUD Mode** — `HUDBreathCue` component, `hudMode`/`currentBreathCueIndex`/`allBreathCuesCompleted` in `useHUDStore`, auto-mode-select in `PracticeScreen`.
 
 ## Recommended Next Phase
 
