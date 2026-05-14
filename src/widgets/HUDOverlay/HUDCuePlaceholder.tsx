@@ -3,6 +3,8 @@ import { GlassCard } from "@shared/ui";
 export type HUDCuePlaceholderProps = {
   cameraAttentionScore?: number | null;
   mouthMovementScore?: number | null;
+  headStabilityScore?: number | null;
+  lookDownRatio?: number | null;
   spokenKeywordCount?: number;
 };
 
@@ -12,12 +14,16 @@ const formatScore = (score: number | null | undefined): string =>
 export function HUDCuePlaceholder({
   cameraAttentionScore,
   mouthMovementScore,
+  headStabilityScore,
+  lookDownRatio,
   spokenKeywordCount = 0,
 }: HUDCuePlaceholderProps) {
   const cueLabels = [
     `WORDS ${spokenKeywordCount}`,
     `CAM ${formatScore(cameraAttentionScore)}`,
     `MOUTH ${formatScore(mouthMovementScore)}`,
+    `HEAD ${formatScore(headStabilityScore)}`,
+    `DOWN ${formatScore(lookDownRatio)}`,
   ];
 
   return (

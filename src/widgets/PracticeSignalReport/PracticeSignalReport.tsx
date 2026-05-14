@@ -8,6 +8,8 @@ export type PracticeSignalReportProps = {
 
 const formatScore = (score: number | null): string =>
   typeof score === "number" ? `${score}%` : "분석 제한";
+const formatOptionalScore = (score: number | null | undefined): string =>
+  typeof score === "number" ? `${score}%` : "분석 제한";
 
 export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
   if (!signals) {
@@ -51,6 +53,49 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
           </p>
         </div>
       </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <p className="text-sm text-text-secondary">입 열림</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-primary">
+            {formatOptionalScore(signals.mouthOpennessScore)}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">고개 안정성</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-primary">
+            {formatOptionalScore(signals.headStabilityScore)}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">아래보기 비율</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-text">
+            {formatOptionalScore(signals.lookDownRatio)}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <p className="text-sm text-text-secondary">읽는 자세 리스크</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-text">
+            {formatOptionalScore(signals.readingPostureRiskScore)}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {signals.readingFeedback ?? "읽는 자세 리스크 기록이 없습니다."}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">pause 리듬</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-text">
+            {formatOptionalScore(signals.pauseRhythmScore)}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {signals.pauseFeedback ?? "pause 리듬 기록이 없습니다."}
+          </p>
+        </div>
+      </div>
+      <p className="text-sm leading-6 text-text-secondary">
+        {signals.postureFeedback ?? "자세 신호 기록이 없습니다."}
+      </p>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <p className="text-sm text-text-secondary">자동 감지 route</p>

@@ -18,6 +18,24 @@ const formatKeywordProgress = (session: PracticeSession): string => {
   ].join("\n");
 };
 
+const formatMotionSignals = (session: PracticeSession): string => {
+  const signals = session.practiceSignals;
+
+  if (!signals) {
+    return "기록 없음";
+  }
+
+  return [
+    `카메라 방향: ${signals.cameraAttentionScore ?? "분석 제한"}%`,
+    `입 움직임: ${signals.mouthMovementScore ?? "분석 제한"}%`,
+    `입 열림: ${signals.mouthOpennessScore ?? "분석 제한"}%`,
+    `고개 안정성: ${signals.headStabilityScore ?? "분석 제한"}%`,
+    `아래보기 비율: ${signals.lookDownRatio ?? "분석 제한"}%`,
+    `읽는 자세 리스크: ${signals.readingPostureRiskScore ?? "분석 제한"}%`,
+    `pause 리듬: ${signals.pauseRhythmScore ?? "분석 제한"}%`,
+  ].join("\n");
+};
+
 export function buildReportMarkdown(session: PracticeSession): string {
   const report = session.report;
 
@@ -64,6 +82,9 @@ export function buildReportMarkdown(session: PracticeSession): string {
     "",
     "## 키워드 진행",
     formatKeywordProgress(session),
+    "",
+    "## 발표 동작 신호",
+    formatMotionSignals(session),
     "",
     "## 발표 리플레이",
     replay || "기록 없음",

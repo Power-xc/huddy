@@ -42,7 +42,7 @@ The P0 flow supports:
 - Keyword detection (`detectKeyword` pure utility, `useKeywordDetection` hook). Auto-advances HUD keyword on speech match with 400 ms visual flash in keyword mode. Auto-advances breath cue when current segment phrase is detected in speech.
 - STT transcript saved to `PracticeSession.transcript` at session end.
 - Real AI integration: `/api/ai/keywords`, `/api/ai/breath-script`, `/api/ai/report` route handlers using `claude-haiku-4-5-20251001` for keywords/breath and `claude-sonnet-4-6` for report. Activated via `NEXT_PUBLIC_AI_MODE=real`. Mock fallback remains default.
-- P3 usability layer: HUD sound cues, spoken keyword extraction from transcript, local MediaPipe-powered camera attention/mouth-movement analysis with fallback sampling, transcript timeline replay, auto/manual keyword progress tracking, and Practice Signal Report are implemented.
+- P3 usability layer: HUD sound cues, spoken keyword extraction from transcript, local MediaPipe-powered camera attention/mouth-movement/posture analysis with fallback sampling, transcript timeline replay, auto/manual keyword progress tracking, and Practice Signal Report are implemented.
 
 ## HUD Mode Selection
 
@@ -74,9 +74,10 @@ The P0 flow supports:
 - Practice signal summaries are persisted to `PracticeSession.practiceSignals` only at session end; raw camera frames are never saved.
 - Transcript timeline replay is derived in `useTranscriptTimeline` from final STT text and stored only as text snippets plus matched route keywords.
 - Keyword route progress is tracked in PracticeScreen as auto-detected vs manual advance events and persisted only at session end.
+- Local motion signals include mouth movement, mouth openness, head stability, look-down ratio, reading posture risk, and pause rhythm. Only aggregate scores and feedback text are stored.
 - AI routing: `aiCoachAdapter` from `src/entities/adapters/aiAdapter.ts` selects real vs mock based on `NEXT_PUBLIC_AI_MODE`. Import `aiCoachAdapter`, not `mockAiCoachAdapter`, in screens.
 - Real AI calls are server-side only through Next.js route handlers. API keys never live in client components.
-- `src/features/camera` owns local camera signal analysis (`useCameraSignalAnalysis`). It uses MediaPipe Tasks Vision in the browser when available, falls back to lightweight frame sampling when unavailable, and stores only aggregate scores and feedback text.
+- `src/features/camera` owns local camera signal analysis (`useCameraSignalAnalysis`). It uses MediaPipe Tasks Vision in the browser when available, falls back to lightweight frame sampling when unavailable, and stores only aggregate posture/mouth scores and feedback text.
 - `src/features/hud` owns HUD sound cues (`useHudSoundCue`). Sound cues are playback-only and do not capture audio.
 
 ## Important Constraints
@@ -145,7 +146,7 @@ The P0 flow supports:
 - Practice handles missing session safely.
 - Practice initializes HUD runtime state from a valid `PracticeSession`.
 - Practice shows a live camera self-view via `getUserMedia` (`video` only, `audio: false`, no recording, no upload). Camera is entirely browser-local. If denied or unavailable, the practice room remains fully usable.
-- Practice analyzes camera direction and mouth movement locally with MediaPipe landmarks when available, then falls back to lightweight frame sampling.
+- Practice analyzes camera direction, mouth movement, mouth openness, head stability, and look-down ratio locally with MediaPipe landmarks when available, then falls back to lightweight frame sampling.
 - Practice shows the HUD overlay.
 - Practice shows only the current keyword, not the full script.
 - Practice timer increments through `usePracticeTimer`.
@@ -157,7 +158,9 @@ The P0 flow supports:
 - Report can be reopened without regenerating saved report data.
 - Report keyword progress shows real count from HUD runtime state (not `card.isUsed`, which is never set in P0).
 - Report shows Practice Signal analysis and a recent transcript replay with route keyword highlights when STT data exists.
+- Report shows mouth openness, head stability, look-down ratio, reading posture risk, and pause rhythm when enough local signal data exists.
 - Progress shows aggregate keyword detection flow: auto-detected count, manual advance count, auto detection rate, and repeated missed route keywords.
+- Progress shows aggregate reading posture risk and average mouth openness across completed sessions.
 - Report can be exported as a local-only Markdown file from the Report actions.
 - Progress reads completed sessions from storage.
 - Progress shows completed sessions and routes them to saved reports.
@@ -189,8 +192,8 @@ The P0 flow supports:
 - **P1-6 Breath cue auto-advance** — second `useKeywordDetection` call detects current `BreathSegment.text` in speech and calls `nextBreathCue` immediately.
 - **P2-1 Transcript persistence** — `PracticeSession.transcript` field; saved at session end so ReportScreen can pass it to AI.
 - **P2-2/3/4 Real AI (Claude)** — three Next.js route handlers; `aiCoachAdapter` factory with mock fallback; activated by `NEXT_PUBLIC_AI_MODE=real`.
-- **P3 Usability Signals** — HUD sound cues, spoken keyword extraction, local camera attention/mouth-movement analysis, transcript timeline replay, auto/manual keyword progress tracking, and report-side Practice Signal analysis.
-- **P3 MediaPipe Local Signals** — browser-only MediaPipe Tasks Vision landmark analysis for camera direction and mouth movement, with fallback sampling when model loading is unavailable.
+- **P3 Usability Signals** — HUD sound cues, spoken keyword extraction, local camera attention/mouth/posture analysis, transcript timeline replay, auto/manual keyword progress tracking, and report-side Practice Signal analysis.
+- **P3 MediaPipe Local Signals** — browser-only MediaPipe Tasks Vision landmark analysis for camera direction, mouth movement, mouth openness, head stability, and look-down ratio, with fallback sampling when model loading is unavailable.
 - **P3 Progressive Keyword Insights** — Progress page shows aggregate auto detection rate, manual advances, and repeated missed route keywords across completed sessions.
 - **P3 Local Report Export** — completed reports can be downloaded as Markdown without backend upload.
 
