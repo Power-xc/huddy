@@ -4,12 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCamera, useCameraSignalAnalysis } from "@features/camera";
 import { useHUDStore, useHudSoundCue, usePracticeTimer } from "@features/hud";
-import {
-  extractSpokenKeywords,
-  useKeywordDetection,
-  useSpeechRecognition,
-  useTranscriptTimeline,
-} from "@features/speech";
+import { extractSpokenKeywords, useKeywordDetection, useSpeechRecognition, useTranscriptTimeline } from "@features/speech";
 import type { PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
@@ -17,6 +12,7 @@ import { CameraPreview } from "@widgets/CameraPreview";
 import { HUDOverlay } from "@widgets/HUDOverlay";
 import { createPracticeSignals } from "./createPracticeSignals";
 import { PracticeHeader } from "./PracticeHeader";
+import { useKeywordProgressTracker } from "./useKeywordProgressTracker";
 
 const getSessionId = (id: string | string[] | undefined): string =>
   Array.isArray(id) ? id[0] ?? "" : id ?? "";
@@ -81,6 +77,7 @@ export function PracticeScreen() {
     keywordCards,
   ).length, [detectionTranscript, keywordCards]);
   const transcriptTimeline = useTranscriptTimeline({ elapsedSec, finalTranscript, keywordCards });
+  const keywordProgress = useKeywordProgressTracker({ currentCard, elapsedSec, onNextKeyword: nextKeyword });
   const detectionKeyword =
     hudMode === "keyword" && !allKeywordsCompleted
       ? (currentCard?.keyword ?? null)
@@ -97,6 +94,7 @@ export function PracticeScreen() {
       }
 
       playCue("keyword");
+      keywordProgress.recordAutoDetected();
       setIsKeywordDetecting(true);
       setKeywordDetectingCardId(currentCard?.id ?? null);
       keywordFlashTimeoutRef.current = window.setTimeout(() => {
@@ -239,6 +237,7 @@ export function PracticeScreen() {
       transcript: completionTranscript,
       keywordCards,
       transcriptTimeline: transcriptTimeline.timeline,
+      keywordProgress: keywordProgress.getProgress(),
       cameraSnapshot: cameraSignals.getSummary(),
       soundCueEnabled: isSoundEnabled,
     });
@@ -287,7 +286,7 @@ export function PracticeScreen() {
         cameraAttentionScore={cameraSignals.snapshot.cameraAttentionScore}
         mouthMovementScore={cameraSignals.snapshot.mouthMovementScore}
         onNextBreathCue={() => nextBreathCue(breathSegments.length)}
-        onNextKeyword={nextKeyword}
+        onNextKeyword={keywordProgress.advanceManually}
         spokenKeywordCount={liveSpokenKeywordCount}
         subtitleLabel={subtitleText}
         targetDurationMin={session.targetDurationMin}

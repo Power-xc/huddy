@@ -5,6 +5,7 @@ import {
 } from "@features/speech";
 import type {
   KeywordCard,
+  KeywordRouteProgressItem,
   PracticeSignalSummary,
   SpokenKeywordInsight,
   TranscriptTimelineItem,
@@ -14,6 +15,7 @@ type CreatePracticeSignalsInput = {
   transcript: string;
   keywordCards: KeywordCard[];
   transcriptTimeline: TranscriptTimelineItem[];
+  keywordProgress: KeywordRouteProgressItem[];
   cameraSnapshot: CameraSignalSnapshot;
   soundCueEnabled: boolean;
 };
@@ -31,6 +33,7 @@ export function createPracticeSignals({
   transcript,
   keywordCards,
   transcriptTimeline,
+  keywordProgress,
   cameraSnapshot,
   soundCueEnabled,
 }: CreatePracticeSignalsInput): PracticeSignalSummary {
@@ -46,6 +49,13 @@ export function createPracticeSignals({
     matchedRouteKeywords,
     missedRouteKeywords,
     transcriptTimeline,
+    keywordProgress,
+    autoDetectedKeywords: keywordProgress
+      .filter((item) => item.source === "auto-detected")
+      .map((item) => item.keyword),
+    manuallyAdvancedKeywords: keywordProgress
+      .filter((item) => item.source === "manual")
+      .map((item) => item.keyword),
     cameraAttentionScore: cameraSnapshot.cameraAttentionScore,
     mouthMovementScore: cameraSnapshot.mouthMovementScore,
     cameraFeedback: cameraSnapshot.cameraFeedback,

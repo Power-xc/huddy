@@ -14,6 +14,8 @@ type ReportRequestBody = {
   spokenKeywords: string[];
   matchedRouteKeywords: string[];
   missedRouteKeywords: string[];
+  autoDetectedKeywords: string[];
+  manuallyAdvancedKeywords: string[];
   cameraAttentionScore: number | null;
   mouthMovementScore: number | null;
   transcriptTimeline: ReportTimelineItem[];
@@ -90,6 +92,10 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
   value.matchedRouteKeywords.every((item) => typeof item === "string") &&
   Array.isArray(value.missedRouteKeywords) &&
   value.missedRouteKeywords.every((item) => typeof item === "string") &&
+  Array.isArray(value.autoDetectedKeywords) &&
+  value.autoDetectedKeywords.every((item) => typeof item === "string") &&
+  Array.isArray(value.manuallyAdvancedKeywords) &&
+  value.manuallyAdvancedKeywords.every((item) => typeof item === "string") &&
   (typeof value.cameraAttentionScore === "number" ||
     value.cameraAttentionScore === null) &&
   (typeof value.mouthMovementScore === "number" ||
@@ -122,6 +128,10 @@ Keywords used: ${body.keywordsUsedCount}/${body.totalKeywords}
 Keyword route: ${body.keywordRoute}
 Detected route keywords: ${body.matchedRouteKeywords.join(" / ") || "none"}
 Missed route keywords: ${body.missedRouteKeywords.join(" / ") || "none"}
+Auto-detected route keywords: ${body.autoDetectedKeywords.join(" / ") || "none"}
+Manually advanced route keywords: ${
+  body.manuallyAdvancedKeywords.join(" / ") || "none"
+}
 Frequently spoken keywords: ${body.spokenKeywords.join(" / ") || "none"}
 Camera attention score: ${body.cameraAttentionScore ?? "unavailable"}
 Mouth movement score: ${body.mouthMovementScore ?? "unavailable"}

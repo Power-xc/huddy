@@ -106,6 +106,8 @@ export class MockAiCoachAdapter implements AICoachAdapter {
         .slice(0, 3)
         .map((keyword) => keyword.text.toLowerCase()) ?? [];
     const missedRoute = session.practiceSignals?.missedRouteKeywords ?? [];
+    const manualRoute =
+      session.practiceSignals?.manuallyAdvancedKeywords ?? [];
 
     return {
       oneLineFeedback: "핵심 흐름을 유지하며 끝까지 발표를 완주했습니다.",
@@ -115,7 +117,9 @@ export class MockAiCoachAdapter implements AICoachAdapter {
         "마무리에서 다음 행동을 명확히 제시했습니다.",
       ],
       improvements: [
-        "중요한 문장 앞에서 한 박자 쉬면 전달력이 더 좋아집니다.",
+        manualRoute.length > 0
+          ? `${manualRoute[0]} 키워드는 다음 연습에서 말로 직접 통과해보세요.`
+          : "중요한 문장 앞에서 한 박자 쉬면 전달력이 더 좋아집니다.",
         "예시를 하나만 더 구체화하면 설득력이 높아집니다.",
       ],
       breathFeedback: "긴 문장은 두 덩어리로 나누면 호흡이 더 안정됩니다.",
