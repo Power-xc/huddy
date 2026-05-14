@@ -42,6 +42,7 @@ The P0 flow supports:
 - Keyword detection (`detectKeyword` pure utility, `useKeywordDetection` hook). Auto-advances HUD keyword on speech match with 400 ms visual flash in keyword mode. Auto-advances breath cue when current segment phrase is detected in speech.
 - STT transcript saved to `PracticeSession.transcript` at session end.
 - Real AI integration: `/api/ai/keywords`, `/api/ai/breath-script`, `/api/ai/report` route handlers using `claude-haiku-4-5-20251001` for keywords/breath and `claude-sonnet-4-6` for report. Activated via `NEXT_PUBLIC_AI_MODE=real`. Mock fallback remains default.
+- P3 usability layer: HUD sound cues, spoken keyword extraction from transcript, local camera attention/mouth-movement heuristics, and Practice Signal Report are implemented.
 
 ## HUD Mode Selection
 
@@ -70,8 +71,11 @@ The P0 flow supports:
 - `src/features/speech` owns STT (`useSpeechRecognition`) and detection (`detectKeyword`, `useKeywordDetection`).
 - Transcript state lives in PracticeScreen local state, not Zustand.
 - Transcript is persisted to `PracticeSession.transcript` only at session end.
+- Practice signal summaries are persisted to `PracticeSession.practiceSignals` only at session end; raw camera frames are never saved.
 - AI routing: `aiCoachAdapter` from `src/entities/adapters/aiAdapter.ts` selects real vs mock based on `NEXT_PUBLIC_AI_MODE`. Import `aiCoachAdapter`, not `mockAiCoachAdapter`, in screens.
 - Real AI calls are server-side only through Next.js route handlers. API keys never live in client components.
+- `src/features/camera` owns local camera signal analysis (`useCameraSignalAnalysis`). It stores only aggregate scores and feedback text.
+- `src/features/hud` owns HUD sound cues (`useHudSoundCue`). Sound cues are playback-only and do not capture audio.
 
 ## Important Constraints
 
@@ -89,6 +93,8 @@ The P0 flow supports:
 - Inline hex colors are forbidden outside token source files.
 - Forbidden vision-identification terms must not appear in `src`.
 - Transcript state must not be stored in Zustand or persisted mid-session.
+- Raw camera frames, images, and streams must not be persisted or uploaded.
+- Camera signal analysis must remain local and must not identify a person.
 - `useKeywordDetection` must not be called in breath mode for keyword detection, and must not be called in keyword mode for breath detection.
 - Never call Anthropic API directly from client components; use Next.js route handlers.
 - `ANTHROPIC_API_KEY` is server-only. `NEXT_PUBLIC_AI_MODE` is the only public AI mode env var.
@@ -152,7 +158,6 @@ The P0 flow supports:
 
 ## What Not To Change
 
-- Do not change the P0 placeholder MVP scope into a real capture or analysis product yet.
 - Do not call real AI APIs directly from client components.
 - Do not add recording, raw audio upload, or MediaPipe.
 - Do not add backend persistence.
@@ -177,13 +182,14 @@ The P0 flow supports:
 - **P1-6 Breath cue auto-advance** — second `useKeywordDetection` call detects current `BreathSegment.text` in speech and calls `nextBreathCue` immediately.
 - **P2-1 Transcript persistence** — `PracticeSession.transcript` field; saved at session end so ReportScreen can pass it to AI.
 - **P2-2/3/4 Real AI (Claude)** — three Next.js route handlers; `aiCoachAdapter` factory with mock fallback; activated by `NEXT_PUBLIC_AI_MODE=real`.
+- **P3 Usability Signals** — HUD sound cues, spoken keyword extraction, local camera attention/mouth-movement heuristics, and report-side Practice Signal analysis.
 
 ## Recommended Next Phase
 
 Suggested order:
 
-1. P3: Pronunciation scoring — compare spoken words from transcript against keyword pronunciations using phoneme similarity (client-side, no backend).
+1. P3: Manual QA on Chrome and Safari for Web Speech API, camera permission, sound cue playback, and camera signal fallbacks.
 2. P3: Session replay — show transcript timeline with detected keywords highlighted on the Report screen.
 3. P3: Progressive keyword difficulty — track which keywords were auto-detected vs manually advanced across sessions; surface in Progress page.
 4. P4: Multi-language support — allow memo input and hint display in languages other than Korean.
-5. Keep recording, audio upload, MediaPipe, backend auth, DB, and payment out of scope until explicitly scoped.
+5. Keep recording, raw audio upload, MediaPipe, backend auth, DB, and payment out of scope until explicitly scoped.

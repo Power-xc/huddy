@@ -101,6 +101,11 @@ export class MockAiCoachAdapter implements AICoachAdapter {
 
   async generateReport(session: PracticeSession): Promise<SessionReport> {
     await wait(300);
+    const spokenWords =
+      session.practiceSignals?.spokenKeywords
+        .slice(0, 3)
+        .map((keyword) => keyword.text.toLowerCase()) ?? [];
+    const missedRoute = session.practiceSignals?.missedRouteKeywords ?? [];
 
     return {
       oneLineFeedback: "핵심 흐름을 유지하며 끝까지 발표를 완주했습니다.",
@@ -114,8 +119,14 @@ export class MockAiCoachAdapter implements AICoachAdapter {
         "예시를 하나만 더 구체화하면 설득력이 높아집니다.",
       ],
       breathFeedback: "긴 문장은 두 덩어리로 나누면 호흡이 더 안정됩니다.",
-      flowFeedback: "도입, 근거, 결론의 순서가 잘 유지되었습니다.",
-      problemWords: ["strategy", "priority", "evidence"],
+      flowFeedback:
+        missedRoute.length > 0
+          ? `다음 연습에서는 ${missedRoute.slice(0, 2).join(", ")} 키워드를 흐름 안에 더 분명히 넣어보세요.`
+          : "도입, 근거, 결론의 순서가 잘 유지되었습니다.",
+      problemWords:
+        spokenWords.length > 0
+          ? spokenWords
+          : ["strategy", "priority", "evidence"],
       nextWeekMission: "같은 주제로 1분 더 짧게 발표하며 핵심만 남겨보세요.",
       recommendedMode: session.mode,
       metrics: {

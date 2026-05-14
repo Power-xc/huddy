@@ -167,6 +167,15 @@ export class RealAiCoachAdapter implements AICoachAdapter {
         keywordRoute: session.keywordCards
           .map((card) => card.keyword)
           .join(" → "),
+        spokenKeywords:
+          session.practiceSignals?.spokenKeywords.map((keyword) => keyword.text) ??
+          [],
+        matchedRouteKeywords:
+          session.practiceSignals?.matchedRouteKeywords ?? [],
+        missedRouteKeywords: session.practiceSignals?.missedRouteKeywords ?? [],
+        cameraAttentionScore:
+          session.practiceSignals?.cameraAttentionScore ?? null,
+        mouthMovementScore: session.practiceSignals?.mouthMovementScore ?? null,
       },
       isReportResponse,
       "report generation failed",

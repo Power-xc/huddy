@@ -10,6 +10,7 @@ import type { PracticeSession } from "@shared/types";
 import { Button, GlassCard } from "@shared/ui";
 import { ReportFeedbackList } from "@widgets/ReportFeedbackList";
 import { ReportSummary } from "@widgets/ReportSummary";
+import { PracticeSignalReport } from "@widgets/PracticeSignalReport";
 import { ReportActions } from "./ReportActions";
 
 type ReportLoadState = "loading" | "generating" | "ready" | "error";
@@ -197,6 +198,8 @@ export function ReportScreen() {
 
       <ReportSummary session={practiceSession} />
 
+      <PracticeSignalReport signals={practiceSession.practiceSignals} />
+
       <GlassCard className="grid gap-3 p-6">
         <p className="text-sm font-medium text-primary">Next route</p>
         <h2 className="text-xl font-semibold text-text">다음 주 미션</h2>
@@ -295,5 +298,3 @@ export function ReportScreen() {
     </main>
   );
 }
-
-export default ReportScreen;

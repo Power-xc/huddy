@@ -1,13 +1,14 @@
 "use client";
 
-import { useCamera } from "@features/camera";
+import type { UseCameraResult } from "@features/camera";
 import { Button } from "@shared/ui";
 
 type CameraPreviewProps = {
+  camera: UseCameraResult;
   className?: string;
 };
 
-export function CameraPreview({ className }: CameraPreviewProps) {
+export function CameraPreview({ camera, className }: CameraPreviewProps) {
   const {
     videoRef,
     status,
@@ -16,7 +17,7 @@ export function CameraPreview({ className }: CameraPreviewProps) {
     startCamera,
     stopCamera,
     toggleMirror,
-  } = useCamera();
+  } = camera;
 
   if (status === "idle") {
     return (
