@@ -40,6 +40,7 @@ export function createPracticeSession({
     keywordCards: [],
     breathScript: null,
     transcript: null,
+    practiceSignals: null,
     report: null,
     recording: null,
     status: "draft",

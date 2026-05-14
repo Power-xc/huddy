@@ -85,6 +85,24 @@ export type SessionReport = {
   createdAt: string;
 };
 
+export type SpokenKeywordInsight = {
+  text: string;
+  count: number;
+  isRouteKeyword: boolean;
+};
+
+export type PracticeSignalSummary = {
+  spokenKeywords: SpokenKeywordInsight[];
+  matchedRouteKeywords: string[];
+  missedRouteKeywords: string[];
+  cameraAttentionScore: number | null;
+  mouthMovementScore: number | null;
+  cameraFeedback: string;
+  mouthFeedback: string;
+  soundCueEnabled: boolean;
+  createdAt: string;
+};
+
 // 브라우저의 Session 객체와 의미가 겹치지 않도록, 저장되는 발표 연습 단위는 PracticeSession으로 고정한다.
 export type PracticeSession = {
   id: string;
@@ -98,6 +116,7 @@ export type PracticeSession = {
   keywordCards: KeywordCard[];
   breathScript: BreathScript | null;
   transcript: string | null;
+  practiceSignals: PracticeSignalSummary | null;
   report: SessionReport | null;
   recording: RecordingMetadata | null;
   status: PracticeSessionStatus;

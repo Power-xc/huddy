@@ -11,6 +11,11 @@ type ReportRequestBody = {
   totalKeywords: number;
   transcript: string | null;
   keywordRoute: string;
+  spokenKeywords: string[];
+  matchedRouteKeywords: string[];
+  missedRouteKeywords: string[];
+  cameraAttentionScore: number | null;
+  mouthMovementScore: number | null;
 };
 
 type ReportDraft = {
@@ -64,7 +69,17 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
   typeof value.keywordsUsedCount === "number" &&
   typeof value.totalKeywords === "number" &&
   (typeof value.transcript === "string" || value.transcript === null) &&
-  typeof value.keywordRoute === "string";
+  typeof value.keywordRoute === "string" &&
+  Array.isArray(value.spokenKeywords) &&
+  value.spokenKeywords.every((item) => typeof item === "string") &&
+  Array.isArray(value.matchedRouteKeywords) &&
+  value.matchedRouteKeywords.every((item) => typeof item === "string") &&
+  Array.isArray(value.missedRouteKeywords) &&
+  value.missedRouteKeywords.every((item) => typeof item === "string") &&
+  (typeof value.cameraAttentionScore === "number" ||
+    value.cameraAttentionScore === null) &&
+  (typeof value.mouthMovementScore === "number" ||
+    value.mouthMovementScore === null);
 
 const isReportDraft = (value: unknown): value is ReportDraft =>
   isRecord(value) &&
@@ -89,6 +104,11 @@ Target: ${body.targetDurationMin} min | Actual: ${
 } min
 Keywords used: ${body.keywordsUsedCount}/${body.totalKeywords}
 Keyword route: ${body.keywordRoute}
+Detected route keywords: ${body.matchedRouteKeywords.join(" / ") || "none"}
+Missed route keywords: ${body.missedRouteKeywords.join(" / ") || "none"}
+Frequently spoken keywords: ${body.spokenKeywords.join(" / ") || "none"}
+Camera attention score: ${body.cameraAttentionScore ?? "unavailable"}
+Mouth movement score: ${body.mouthMovementScore ?? "unavailable"}
 ${
   body.transcript
     ? `\nTranscript:\n${body.transcript.slice(0, 3000)}`

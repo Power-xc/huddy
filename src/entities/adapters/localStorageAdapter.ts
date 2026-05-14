@@ -31,6 +31,9 @@ const isPracticeSession = (value: unknown): value is PracticeSession => {
     (value.transcript === undefined ||
       typeof value.transcript === "string" ||
       value.transcript === null) &&
+    (value.practiceSignals === undefined ||
+      typeof value.practiceSignals === "object" ||
+      value.practiceSignals === null) &&
     typeof value.status === "string" &&
     typeof value.createdAt === "string" &&
     typeof value.updatedAt === "string" &&
@@ -59,6 +62,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       (session) => ({
         ...session,
         transcript: session.transcript ?? null,
+        practiceSignals: session.practiceSignals ?? null,
       }),
     );
   }

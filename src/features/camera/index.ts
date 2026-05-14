@@ -1,5 +1,10 @@
 export { useCamera } from "./lib/useCamera";
+export { useCameraSignalAnalysis } from "./lib/useCameraSignalAnalysis";
 export type { UseCameraResult } from "./lib/useCamera";
+export type {
+  CameraSignalSnapshot,
+  UseCameraSignalAnalysisResult,
+} from "./lib/useCameraSignalAnalysis";
 export type {
   CameraStatus,
   CameraErrorReason,

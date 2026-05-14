@@ -2,13 +2,20 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useHUDStore, usePracticeTimer } from "@features/hud";
-import { useKeywordDetection, useSpeechRecognition } from "@features/speech";
+import { useCamera, useCameraSignalAnalysis } from "@features/camera";
+import { useHUDStore, useHudSoundCue, usePracticeTimer } from "@features/hud";
+import {
+  extractSpokenKeywords,
+  useKeywordDetection,
+  useSpeechRecognition,
+} from "@features/speech";
 import type { PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
 import { CameraPreview } from "@widgets/CameraPreview";
 import { HUDOverlay } from "@widgets/HUDOverlay";
+import { createPracticeSignals } from "./createPracticeSignals";
+import { PracticeHeader } from "./PracticeHeader";
 
 const getSessionId = (id: string | string[] | undefined): string =>
   Array.isArray(id) ? id[0] ?? "" : id ?? "";
@@ -24,6 +31,8 @@ export function PracticeScreen() {
     string | null
   >(null);
   const keywordFlashTimeoutRef = useRef<number | null>(null);
+  const playedTimerCuesRef = useRef<Set<number>>(new Set());
+  const playedListeningCueRef = useRef(false);
   const hudState = useHUDStore((state) => state.hudState);
   const keywordCards = useHUDStore((state) => state.keywordCards);
   const allKeywordsCompleted = useHUDStore(
@@ -44,6 +53,12 @@ export function PracticeScreen() {
   const resetHUD = useHUDStore((state) => state.reset);
 
   usePracticeTimer();
+  const camera = useCamera();
+  const cameraSignals = useCameraSignalAnalysis(
+    camera.videoRef,
+    camera.status === "ready",
+  );
+  const { isSoundEnabled, playCue, toggleSound } = useHudSoundCue();
 
   const {
     interimTranscript,
@@ -64,6 +79,10 @@ export function PracticeScreen() {
     : keywordCards[currentKeywordIndex] ?? null;
   const breathSegments = session?.breathScript?.segments ?? [];
   const detectionTranscript = interimTranscript || finalTranscript;
+  const liveSpokenKeywordCount = useMemo(
+    () => extractSpokenKeywords(detectionTranscript, keywordCards).length,
+    [detectionTranscript, keywordCards],
+  );
   const detectionKeyword =
     hudMode === "keyword" && !allKeywordsCompleted
       ? (currentCard?.keyword ?? null)
@@ -79,6 +98,7 @@ export function PracticeScreen() {
         window.clearTimeout(keywordFlashTimeoutRef.current);
       }
 
+      playCue("keyword");
       setIsKeywordDetecting(true);
       setKeywordDetectingCardId(currentCard?.id ?? null);
       keywordFlashTimeoutRef.current = window.setTimeout(() => {
@@ -98,7 +118,10 @@ export function PracticeScreen() {
   useKeywordDetection({
     transcript: detectionTranscript,
     keyword: currentBreathSegment?.text ?? null,
-    onDetected: () => nextBreathCue(breathSegments.length),
+    onDetected: () => {
+      playCue("breath");
+      nextBreathCue(breathSegments.length);
+    },
   });
 
   useEffect(() => {
@@ -139,6 +162,28 @@ export function PracticeScreen() {
     startListening();
     return () => stopListening();
   }, [isLoaded, isSTTSupported, session, startListening, stopListening]);
+
+  useEffect(() => {
+    if (isListening && !playedListeningCueRef.current) {
+      playCue("milestone");
+      playedListeningCueRef.current = true;
+    }
+  }, [isListening, playCue]);
+
+  useEffect(() => {
+    if (!session || elapsedSec <= 0) {
+      return;
+    }
+
+    const targetSec = session.targetDurationMin * 60;
+    [0.5, 0.8, 1].forEach((ratio) => {
+      const cueSecond = Math.max(1, Math.round(targetSec * ratio));
+      if (elapsedSec >= cueSecond && !playedTimerCuesRef.current.has(cueSecond)) {
+        playedTimerCuesRef.current.add(cueSecond);
+        playCue("milestone");
+      }
+    });
+  }, [elapsedSec, playCue, session]);
 
   useEffect(() => {
     return () => {
@@ -188,9 +233,23 @@ export function PracticeScreen() {
       endSession();
     }
 
-    if (finalTranscript.trim().length > 0) {
-      storage.updateSession(session.id, { transcript: finalTranscript.trim() });
-    }
+    const completionTranscript = [finalTranscript, interimTranscript]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const practiceSignals = createPracticeSignals({
+      transcript: completionTranscript,
+      keywordCards,
+      cameraSnapshot: cameraSignals.getSummary(),
+      soundCueEnabled: isSoundEnabled,
+    });
+
+    storage.updateSession(session.id, {
+      transcript: completionTranscript || null,
+      practiceSignals,
+    });
+
+    playCue("complete");
 
     router.push(`/session/${session.id}/report`);
   };
@@ -203,33 +262,17 @@ export function PracticeScreen() {
         color: "var(--color-text)",
       }}
     >
-      <header className="absolute left-0 right-0 top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-4">
-        <div className="flex items-center gap-2 justify-self-start">
-          <p className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary">
-            Practice
-          </p>
-          {isSTTSupported && (
-            <span
-              className={[
-                "h-2 w-2 rounded-full transition-colors",
-                isListening ? "bg-primary" : "bg-border",
-              ].join(" ")}
-              title={isListening ? "마이크 인식 중" : "마이크 대기"}
-            />
-          )}
-        </div>
-        <h1 className="max-w-lg truncate text-center font-heading text-lg font-semibold text-text">
-          {session.title}
-        </h1>
-        <div className="justify-self-end">
-          <Button onClick={handleCompletePractice} variant="secondary">
-            완료하고 리포트
-          </Button>
-        </div>
-      </header>
+      <PracticeHeader
+        isListening={isListening}
+        isSoundEnabled={isSoundEnabled}
+        isSTTSupported={isSTTSupported}
+        onComplete={handleCompletePractice}
+        onToggleSound={toggleSound}
+        title={session.title}
+      />
 
       <section className="absolute inset-x-5 bottom-5 top-20 overflow-hidden rounded-2xl border border-border bg-surface">
-        <CameraPreview className="h-full w-full" />
+        <CameraPreview camera={camera} className="h-full w-full" />
       </section>
 
       <HUDOverlay
@@ -242,8 +285,11 @@ export function PracticeScreen() {
         elapsedSec={elapsedSec}
         hudMode={hudMode}
         isKeywordDetecting={isCurrentCardDetecting}
+        cameraAttentionScore={cameraSignals.snapshot.cameraAttentionScore}
+        mouthMovementScore={cameraSignals.snapshot.mouthMovementScore}
         onNextBreathCue={() => nextBreathCue(breathSegments.length)}
         onNextKeyword={nextKeyword}
+        spokenKeywordCount={liveSpokenKeywordCount}
         subtitleLabel={subtitleText}
         targetDurationMin={session.targetDurationMin}
         title={session.title}
@@ -252,5 +298,3 @@ export function PracticeScreen() {
     </main>
   );
 }
-
-export default PracticeScreen;

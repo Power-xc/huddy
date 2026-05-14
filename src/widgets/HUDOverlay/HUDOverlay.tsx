@@ -19,6 +19,9 @@ export type HUDOverlayProps = {
   onNextKeyword?: () => void;
   allKeywordsCompleted?: boolean;
   isKeywordDetecting?: boolean;
+  cameraAttentionScore?: number | null;
+  mouthMovementScore?: number | null;
+  spokenKeywordCount?: number;
   hudMode?: "keyword" | "breath";
   breathSegments?: BreathSegment[];
   currentBreathCueIndex?: number;
@@ -39,6 +42,9 @@ export function HUDOverlay({
   onNextKeyword,
   allKeywordsCompleted = false,
   isKeywordDetecting = false,
+  cameraAttentionScore,
+  mouthMovementScore,
+  spokenKeywordCount,
   hudMode,
   breathSegments,
   currentBreathCueIndex = 0,
@@ -122,7 +128,11 @@ export function HUDOverlay({
           right: "var(--hud-safe-x)",
         }}
       >
-        <HUDCuePlaceholder />
+        <HUDCuePlaceholder
+          cameraAttentionScore={cameraAttentionScore}
+          mouthMovementScore={mouthMovementScore}
+          spokenKeywordCount={spokenKeywordCount}
+        />
       </div>
 
       <div
