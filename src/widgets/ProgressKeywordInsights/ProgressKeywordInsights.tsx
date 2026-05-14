@@ -23,6 +23,18 @@ const countKeywords = (keywords: string[]): KeywordCount[] => {
     .slice(0, 6);
 };
 
+const averageScore = (scores: Array<number | null | undefined>): number | null => {
+  const validScores = scores.filter((score): score is number => typeof score === "number");
+
+  if (validScores.length === 0) {
+    return null;
+  }
+
+  return Math.round(
+    validScores.reduce((total, score) => total + score, 0) / validScores.length,
+  );
+};
+
 export function ProgressKeywordInsights({
   sessions,
 }: ProgressKeywordInsightsProps) {
@@ -45,6 +57,14 @@ export function ProgressKeywordInsights({
       ? Math.round((autoDetectedKeywords.length / trackedKeywordCount) * 100)
       : null;
   const missedKeywordCounts = countKeywords(missedKeywords);
+  const averageReadingRisk = averageScore(
+    completedSessions.map(
+      (session) => session.practiceSignals?.readingPostureRiskScore,
+    ),
+  );
+  const averageMouthOpenness = averageScore(
+    completedSessions.map((session) => session.practiceSignals?.mouthOpennessScore),
+  );
 
   return (
     <GlassCard className="grid gap-5 p-6">
@@ -54,7 +74,7 @@ export function ProgressKeywordInsights({
           키워드 감지 흐름
         </h2>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-5">
         <div>
           <p className="text-sm text-text-secondary">자동 감지율</p>
           <p className="mt-2 font-mono text-3xl font-semibold text-primary">
@@ -71,6 +91,18 @@ export function ProgressKeywordInsights({
           <p className="text-sm text-text-secondary">수동 전환</p>
           <p className="mt-2 font-mono text-3xl font-semibold text-text">
             {manuallyAdvancedKeywords.length}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">읽는 자세 리스크</p>
+          <p className="mt-2 font-mono text-3xl font-semibold text-text">
+            {averageReadingRisk === null ? "--" : `${averageReadingRisk}%`}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">평균 입 열림</p>
+          <p className="mt-2 font-mono text-3xl font-semibold text-text">
+            {averageMouthOpenness === null ? "--" : `${averageMouthOpenness}%`}
           </p>
         </div>
       </div>

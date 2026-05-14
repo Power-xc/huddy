@@ -180,6 +180,14 @@ export class RealAiCoachAdapter implements AICoachAdapter {
         cameraAttentionScore:
           session.practiceSignals?.cameraAttentionScore ?? null,
         mouthMovementScore: session.practiceSignals?.mouthMovementScore ?? null,
+        mouthOpennessScore:
+          session.practiceSignals?.mouthOpennessScore ?? null,
+        headStabilityScore:
+          session.practiceSignals?.headStabilityScore ?? null,
+        lookDownRatio: session.practiceSignals?.lookDownRatio ?? null,
+        readingPostureRiskScore:
+          session.practiceSignals?.readingPostureRiskScore ?? null,
+        pauseRhythmScore: session.practiceSignals?.pauseRhythmScore ?? null,
         transcriptTimeline:
           session.practiceSignals?.transcriptTimeline.slice(-8).map((item) => ({
             elapsedSec: item.elapsedSec,

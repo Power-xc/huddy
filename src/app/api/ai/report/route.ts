@@ -18,6 +18,11 @@ type ReportRequestBody = {
   manuallyAdvancedKeywords: string[];
   cameraAttentionScore: number | null;
   mouthMovementScore: number | null;
+  mouthOpennessScore: number | null;
+  headStabilityScore: number | null;
+  lookDownRatio: number | null;
+  readingPostureRiskScore: number | null;
+  pauseRhythmScore: number | null;
   transcriptTimeline: ReportTimelineItem[];
 };
 
@@ -100,6 +105,15 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
     value.cameraAttentionScore === null) &&
   (typeof value.mouthMovementScore === "number" ||
     value.mouthMovementScore === null) &&
+  (typeof value.mouthOpennessScore === "number" ||
+    value.mouthOpennessScore === null) &&
+  (typeof value.headStabilityScore === "number" ||
+    value.headStabilityScore === null) &&
+  (typeof value.lookDownRatio === "number" || value.lookDownRatio === null) &&
+  (typeof value.readingPostureRiskScore === "number" ||
+    value.readingPostureRiskScore === null) &&
+  (typeof value.pauseRhythmScore === "number" ||
+    value.pauseRhythmScore === null) &&
   Array.isArray(value.transcriptTimeline) &&
   value.transcriptTimeline.every(isTimelineItem);
 
@@ -135,6 +149,11 @@ Manually advanced route keywords: ${
 Frequently spoken keywords: ${body.spokenKeywords.join(" / ") || "none"}
 Camera attention score: ${body.cameraAttentionScore ?? "unavailable"}
 Mouth movement score: ${body.mouthMovementScore ?? "unavailable"}
+Mouth openness score: ${body.mouthOpennessScore ?? "unavailable"}
+Head stability score: ${body.headStabilityScore ?? "unavailable"}
+Look-down ratio: ${body.lookDownRatio ?? "unavailable"}
+Reading posture risk: ${body.readingPostureRiskScore ?? "unavailable"}
+Pause rhythm score: ${body.pauseRhythmScore ?? "unavailable"}
 Recent speech timeline:
 ${
   body.transcriptTimeline

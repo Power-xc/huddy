@@ -21,6 +21,8 @@ export type HUDOverlayProps = {
   isKeywordDetecting?: boolean;
   cameraAttentionScore?: number | null;
   mouthMovementScore?: number | null;
+  headStabilityScore?: number | null;
+  lookDownRatio?: number | null;
   spokenKeywordCount?: number;
   hudMode?: "keyword" | "breath";
   breathSegments?: BreathSegment[];
@@ -44,6 +46,8 @@ export function HUDOverlay({
   isKeywordDetecting = false,
   cameraAttentionScore,
   mouthMovementScore,
+  headStabilityScore,
+  lookDownRatio,
   spokenKeywordCount,
   hudMode,
   breathSegments,
@@ -130,6 +134,8 @@ export function HUDOverlay({
       >
         <HUDCuePlaceholder
           cameraAttentionScore={cameraAttentionScore}
+          headStabilityScore={headStabilityScore}
+          lookDownRatio={lookDownRatio}
           mouthMovementScore={mouthMovementScore}
           spokenKeywordCount={spokenKeywordCount}
         />

@@ -284,6 +284,8 @@ export function PracticeScreen() {
         hudMode={hudMode}
         isKeywordDetecting={isCurrentCardDetecting}
         cameraAttentionScore={cameraSignals.snapshot.cameraAttentionScore}
+        headStabilityScore={cameraSignals.snapshot.headStabilityScore}
+        lookDownRatio={cameraSignals.snapshot.lookDownRatio}
         mouthMovementScore={cameraSignals.snapshot.mouthMovementScore}
         onNextBreathCue={() => nextBreathCue(breathSegments.length)}
         onNextKeyword={keywordProgress.advanceManually}

@@ -116,8 +116,16 @@ export type PracticeSignalSummary = {
   manuallyAdvancedKeywords: string[];
   cameraAttentionScore: number | null;
   mouthMovementScore: number | null;
+  mouthOpennessScore: number | null;
+  headStabilityScore: number | null;
+  lookDownRatio: number | null;
+  readingPostureRiskScore: number | null;
+  pauseRhythmScore: number | null;
   cameraFeedback: string;
   mouthFeedback: string;
+  postureFeedback: string;
+  pauseFeedback: string;
+  readingFeedback: string;
   soundCueEnabled: boolean;
   createdAt: string;
 };

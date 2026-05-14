@@ -7,6 +7,7 @@ import type {
 import type { PracticeSignalSummary } from "@shared/types";
 
 type RegionBox = { x: number; y: number; width: number; height: number };
+type Point3 = { x: number; y: number; z: number };
 
 export type RunningStats = {
   samples: number;
@@ -14,17 +15,26 @@ export type RunningStats = {
   attentionHits: number;
   movementSamples: number;
   movementSum: number;
+  mouthOpenSamples: number;
+  mouthOpenSum: number;
+  lookDownSamples: number;
+  lookDownHits: number;
+  headSamples: number;
+  headMovementSum: number;
+  previousMouthOpen: number | null;
   previousMouthLight: number | null;
+  previousNose: Point3 | null;
   usedVisionLandmarks: boolean;
   landmarkerFailed: boolean;
 };
 
 export type CameraSignalSnapshot = Pick<
   PracticeSignalSummary,
-  "cameraAttentionScore" | "mouthMovementScore" | "cameraFeedback" | "mouthFeedback"
+  | "cameraAttentionScore" | "mouthMovementScore" | "mouthOpennessScore"
+  | "headStabilityScore" | "lookDownRatio" | "readingPostureRiskScore"
+  | "cameraFeedback" | "mouthFeedback" | "postureFeedback" | "readingFeedback"
 > & {
-  sampleCount: number;
-  isAnalyzing: boolean;
+  sampleCount: number; isAnalyzing: boolean;
   usedNativeDetector: boolean;
 };
 
@@ -37,33 +47,34 @@ export const emptySnapshot: CameraSignalSnapshot = {
   sampleCount: 0,
   cameraAttentionScore: null,
   mouthMovementScore: null,
+  mouthOpennessScore: null,
+  headStabilityScore: null,
+  lookDownRatio: null,
+  readingPostureRiskScore: null,
   cameraFeedback: "카메라 분석 대기 중입니다.",
   mouthFeedback: "입 움직임 분석 대기 중입니다.",
+  postureFeedback: "자세 신호 분석 대기 중입니다.",
+  readingFeedback: "읽는 자세 리스크 분석 대기 중입니다.",
   isAnalyzing: false,
   usedNativeDetector: false,
 };
 
 export const createInitialStats = (): RunningStats => ({
-  samples: 0,
-  attentionSamples: 0,
-  attentionHits: 0,
-  movementSamples: 0,
-  movementSum: 0,
-  previousMouthLight: null,
+  samples: 0, attentionSamples: 0, attentionHits: 0,
+  movementSamples: 0, movementSum: 0,
+  mouthOpenSamples: 0, mouthOpenSum: 0,
+  lookDownSamples: 0, lookDownHits: 0,
+  headSamples: 0, headMovementSum: 0,
+  previousMouthOpen: null, previousMouthLight: null, previousNose: null,
   usedVisionLandmarks: false,
   landmarkerFailed: false,
 });
 
-const clampScore = (value: number): number =>
-  Math.max(0, Math.min(100, Math.round(value)));
+const clampScore = (value: number): number => Math.max(0, Math.min(100, Math.round(value)));
 
-const distance = (a: NormalizedLandmark, b: NormalizedLandmark): number =>
-  Math.hypot(a.x - b.x, a.y - b.y);
+const distance = (a: Point3, b: Point3): number => Math.hypot(a.x - b.x, a.y - b.y);
 
-const landmarkAt = (
-  landmarks: NormalizedLandmark[],
-  index: number,
-): NormalizedLandmark | null => landmarks[index] ?? null;
+const landmarkAt = (landmarks: NormalizedLandmark[], index: number): NormalizedLandmark | null => landmarks[index] ?? null;
 
 const blendScore = (result: FaceLandmarkerResult, names: string[]): number => {
   const categories = result.faceBlendshapes[0]?.categories ?? [];
@@ -110,11 +121,32 @@ export const createSnapshot = (
     stats.movementSamples > 0
       ? clampScore((stats.movementSum / stats.movementSamples) * 100)
       : null;
+  const mouthOpennessScore =
+    stats.mouthOpenSamples > 0
+      ? clampScore((stats.mouthOpenSum / stats.mouthOpenSamples) * 100)
+      : null;
+  const headStabilityScore =
+    stats.headSamples > 0
+      ? clampScore(100 - (stats.headMovementSum / stats.headSamples) * 1200)
+      : null;
+  const lookDownRatio =
+    stats.lookDownSamples > 0
+      ? clampScore((stats.lookDownHits / stats.lookDownSamples) * 100)
+      : null;
+  const readingPostureRiskScore =
+    cameraAttentionScore === null || lookDownRatio === null
+      ? null
+      : clampScore(lookDownRatio * 0.55 + (100 - cameraAttentionScore) * 0.3 +
+          (headStabilityScore ?? 50) * 0.15);
 
   return {
     sampleCount: stats.samples,
     cameraAttentionScore,
     mouthMovementScore,
+    mouthOpennessScore,
+    headStabilityScore,
+    lookDownRatio,
+    readingPostureRiskScore,
     cameraFeedback:
       cameraAttentionScore === null
         ? "영상 신호가 아직 충분하지 않습니다."
@@ -127,6 +159,20 @@ export const createSnapshot = (
         : mouthMovementScore >= 35
           ? "입 움직임이 충분해 발화가 비교적 분명해 보입니다."
           : "입 움직임이 작게 잡힙니다. 핵심 단어를 더 크게 열어 말해보세요.",
+    postureFeedback:
+      headStabilityScore === null || lookDownRatio === null
+        ? "자세 신호가 아직 충분하지 않습니다."
+        : lookDownRatio >= 35
+          ? "아래를 보는 시간이 길게 잡힙니다. route cue를 본 뒤 다시 카메라 쪽으로 돌아오세요."
+          : headStabilityScore >= 70
+            ? "고개 움직임과 화면 중심 유지가 안정적입니다."
+            : "고개 움직임이 크게 잡힙니다. 문장 사이에 중심을 다시 잡아보세요.",
+    readingFeedback:
+      readingPostureRiskScore === null
+        ? "읽는 자세 리스크를 아직 계산할 수 없습니다."
+        : readingPostureRiskScore >= 60
+          ? "대본이나 화면 아래를 오래 보는 패턴이 의심됩니다. 다음 회차는 키워드만 보고 말해보세요."
+          : "읽는 자세 리스크가 낮게 잡힙니다.",
     isAnalyzing: enabled && stats.samples > 0,
     usedNativeDetector: stats.usedVisionLandmarks,
   };
@@ -179,17 +225,32 @@ export const applyLandmarkSample = (
       Math.abs(nose.y - eyeCenterY) < 0.18;
 
     stats.attentionSamples += 1;
+    stats.lookDownSamples += 1;
     if (isCentered && downScore < 0.42 && sideScore < 0.55) {
       stats.attentionHits += 1;
     }
+    if (downScore >= 0.42 || nose.y - eyeCenterY > 0.16) {
+      stats.lookDownHits += 1;
+    }
+    if (stats.previousNose) {
+      stats.headSamples += 1;
+      stats.headMovementSum += distance(nose, stats.previousNose);
+    }
+    stats.previousNose = { x: nose.x, y: nose.y, z: nose.z };
   }
 
   if (upperLip && lowerLip && leftMouth && rightMouth) {
     const mouthWidth = Math.max(0.01, distance(leftMouth, rightMouth));
     const mouthOpenRatio = distance(upperLip, lowerLip) / mouthWidth;
 
+    stats.mouthOpenSamples += 1;
+    stats.mouthOpenSum += Math.min(1, mouthOpenRatio * 4);
     stats.movementSamples += 1;
-    stats.movementSum += Math.min(1, mouthOpenRatio * 4);
+    stats.movementSum +=
+      stats.previousMouthOpen === null
+        ? Math.min(1, mouthOpenRatio * 4)
+        : Math.min(1, Math.abs(mouthOpenRatio - stats.previousMouthOpen) * 12);
+    stats.previousMouthOpen = mouthOpenRatio;
   }
 
   stats.usedVisionLandmarks = true;
