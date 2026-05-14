@@ -22,6 +22,8 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
   }
 
   const timeline = signals.transcriptTimeline ?? [];
+  const autoDetectedKeywords = signals.autoDetectedKeywords ?? [];
+  const manuallyAdvancedKeywords = signals.manuallyAdvancedKeywords ?? [];
 
   return (
     <GlassCard className="grid gap-5 p-6">
@@ -46,6 +48,30 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
           </p>
           <p className="mt-2 text-sm leading-6 text-text-secondary">
             {signals.mouthFeedback}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <p className="text-sm text-text-secondary">자동 감지 route</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-primary">
+            {autoDetectedKeywords.length}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {autoDetectedKeywords.length > 0
+              ? autoDetectedKeywords.join(" / ")
+              : "STT로 자동 통과된 키워드가 없습니다."}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">수동 전환 route</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-text">
+            {manuallyAdvancedKeywords.length}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {manuallyAdvancedKeywords.length > 0
+              ? manuallyAdvancedKeywords.join(" / ")
+              : "수동으로 넘긴 키워드가 없습니다."}
           </p>
         </div>
       </div>

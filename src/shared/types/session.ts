@@ -98,11 +98,22 @@ export type TranscriptTimelineItem = {
   matchedKeywords: string[];
 };
 
+export type KeywordAdvanceSource = "auto-detected" | "manual";
+
+export type KeywordRouteProgressItem = {
+  keyword: string;
+  source: KeywordAdvanceSource;
+  elapsedSec: number;
+};
+
 export type PracticeSignalSummary = {
   spokenKeywords: SpokenKeywordInsight[];
   matchedRouteKeywords: string[];
   missedRouteKeywords: string[];
   transcriptTimeline: TranscriptTimelineItem[];
+  keywordProgress: KeywordRouteProgressItem[];
+  autoDetectedKeywords: string[];
+  manuallyAdvancedKeywords: string[];
   cameraAttentionScore: number | null;
   mouthMovementScore: number | null;
   cameraFeedback: string;

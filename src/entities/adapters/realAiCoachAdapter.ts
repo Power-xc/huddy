@@ -173,6 +173,10 @@ export class RealAiCoachAdapter implements AICoachAdapter {
         matchedRouteKeywords:
           session.practiceSignals?.matchedRouteKeywords ?? [],
         missedRouteKeywords: session.practiceSignals?.missedRouteKeywords ?? [],
+        autoDetectedKeywords:
+          session.practiceSignals?.autoDetectedKeywords ?? [],
+        manuallyAdvancedKeywords:
+          session.practiceSignals?.manuallyAdvancedKeywords ?? [],
         cameraAttentionScore:
           session.practiceSignals?.cameraAttentionScore ?? null,
         mouthMovementScore: session.practiceSignals?.mouthMovementScore ?? null,

@@ -10,6 +10,7 @@ import type {
 } from "@shared/types";
 import { Button, GlassCard } from "@shared/ui";
 import { storage } from "@shared/lib/storage";
+import { ProgressKeywordInsights } from "@widgets/ProgressKeywordInsights";
 import { WeekGrid } from "@widgets/WeekGrid";
 
 const initialConfig: AppConfig = {
@@ -103,6 +104,8 @@ export function ProgressPage() {
         </div>
         <WeekGrid currentWeek={config.currentWeek} sessions={summaries} />
       </GlassCard>
+
+      <ProgressKeywordInsights sessions={sessions} />
 
       <GlassCard className="flex flex-col gap-4 p-6">
         <h2 className="text-xl font-semibold text-text">완료된 route</h2>
