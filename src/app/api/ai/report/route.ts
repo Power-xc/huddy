@@ -16,6 +16,13 @@ type ReportRequestBody = {
   missedRouteKeywords: string[];
   cameraAttentionScore: number | null;
   mouthMovementScore: number | null;
+  transcriptTimeline: ReportTimelineItem[];
+};
+
+type ReportTimelineItem = {
+  elapsedSec: number;
+  text: string;
+  matchedKeywords: string[];
 };
 
 type ReportDraft = {
@@ -60,6 +67,13 @@ const isStrengths = (value: unknown): value is [string, string, string] =>
 const isImprovements = (value: unknown): value is [string, string] =>
   isStringArrayOfLength(value, 2);
 
+const isTimelineItem = (value: unknown): value is ReportTimelineItem =>
+  isRecord(value) &&
+  typeof value.elapsedSec === "number" &&
+  typeof value.text === "string" &&
+  Array.isArray(value.matchedKeywords) &&
+  value.matchedKeywords.every((item) => typeof item === "string");
+
 const isRequestBody = (value: unknown): value is ReportRequestBody =>
   isRecord(value) &&
   typeof value.title === "string" &&
@@ -79,7 +93,9 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
   (typeof value.cameraAttentionScore === "number" ||
     value.cameraAttentionScore === null) &&
   (typeof value.mouthMovementScore === "number" ||
-    value.mouthMovementScore === null);
+    value.mouthMovementScore === null) &&
+  Array.isArray(value.transcriptTimeline) &&
+  value.transcriptTimeline.every(isTimelineItem);
 
 const isReportDraft = (value: unknown): value is ReportDraft =>
   isRecord(value) &&
@@ -109,6 +125,16 @@ Missed route keywords: ${body.missedRouteKeywords.join(" / ") || "none"}
 Frequently spoken keywords: ${body.spokenKeywords.join(" / ") || "none"}
 Camera attention score: ${body.cameraAttentionScore ?? "unavailable"}
 Mouth movement score: ${body.mouthMovementScore ?? "unavailable"}
+Recent speech timeline:
+${
+  body.transcriptTimeline
+    .slice(-8)
+    .map(
+      (item) =>
+        `${item.elapsedSec}s: ${item.text} [${item.matchedKeywords.join(", ") || "no route keyword"}]`,
+    )
+    .join("\n") || "none"
+}
 ${
   body.transcript
     ? `\nTranscript:\n${body.transcript.slice(0, 3000)}`

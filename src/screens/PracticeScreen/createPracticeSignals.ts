@@ -7,11 +7,13 @@ import type {
   KeywordCard,
   PracticeSignalSummary,
   SpokenKeywordInsight,
+  TranscriptTimelineItem,
 } from "@shared/types";
 
 type CreatePracticeSignalsInput = {
   transcript: string;
   keywordCards: KeywordCard[];
+  transcriptTimeline: TranscriptTimelineItem[];
   cameraSnapshot: CameraSignalSnapshot;
   soundCueEnabled: boolean;
 };
@@ -28,6 +30,7 @@ const fallbackKeywordInsights = (
 export function createPracticeSignals({
   transcript,
   keywordCards,
+  transcriptTimeline,
   cameraSnapshot,
   soundCueEnabled,
 }: CreatePracticeSignalsInput): PracticeSignalSummary {
@@ -42,6 +45,7 @@ export function createPracticeSignals({
     spokenKeywords,
     matchedRouteKeywords,
     missedRouteKeywords,
+    transcriptTimeline,
     cameraAttentionScore: cameraSnapshot.cameraAttentionScore,
     mouthMovementScore: cameraSnapshot.mouthMovementScore,
     cameraFeedback: cameraSnapshot.cameraFeedback,

@@ -1,4 +1,5 @@
 import type { PracticeSignalSummary } from "@shared/types";
+import { formatTime } from "@shared/lib/formatTime";
 import { GlassCard } from "@shared/ui";
 
 export type PracticeSignalReportProps = {
@@ -19,6 +20,8 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
       </GlassCard>
     );
   }
+
+  const timeline = signals.transcriptTimeline ?? [];
 
   return (
     <GlassCard className="grid gap-5 p-6">
@@ -69,6 +72,42 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
               : "준비한 route 키워드를 모두 언급했습니다."}
           </p>
         </div>
+      </div>
+      <div className="border-t border-border pt-5">
+        <p className="text-sm text-text-secondary">발표 리플레이</p>
+        {timeline.length > 0 ? (
+          <div className="mt-3 grid gap-3">
+            {timeline.slice(-6).map((item) => (
+              <div
+                className="rounded-xl border border-border bg-surface/60 p-3"
+                key={item.id}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-mono text-xs text-text-muted">
+                    {formatTime(item.elapsedSec)}
+                  </span>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {item.matchedKeywords.map((keyword) => (
+                      <span
+                        className="rounded-full border border-primary/40 px-2 py-0.5 text-xs text-primary"
+                        key={keyword}
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
+                  {item.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm leading-6 text-text-secondary">
+            저장된 발표 문장 흐름이 없습니다.
+          </p>
+        )}
       </div>
     </GlassCard>
   );

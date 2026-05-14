@@ -5,5 +5,10 @@ export {
   getRouteKeywordProgress,
 } from "./lib/extractSpokenKeywords";
 export { useKeywordDetection } from "./lib/useKeywordDetection";
+export { useTranscriptTimeline } from "./lib/useTranscriptTimeline";
 export type { UseSpeechRecognitionResult } from "./lib/useSpeechRecognition";
 export type { UseKeywordDetectionOptions } from "./lib/useKeywordDetection";
+export type {
+  UseTranscriptTimelineOptions,
+  UseTranscriptTimelineResult,
+} from "./lib/useTranscriptTimeline";
