@@ -8,6 +8,7 @@ import {
   extractSpokenKeywords,
   useKeywordDetection,
   useSpeechRecognition,
+  useTranscriptTimeline,
 } from "@features/speech";
 import type { PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
@@ -71,18 +72,15 @@ export function PracticeScreen() {
 
   const currentKeywordIndex = hudState?.currentKeywordIndex ?? 0;
   const elapsedSec = hudState?.elapsedSec ?? 0;
-  const isSessionEnded = hudState
-    ? !hudState.isRunning && !hudState.isPaused
-    : false;
-  const currentCard = allKeywordsCompleted
-    ? null
-    : keywordCards[currentKeywordIndex] ?? null;
+  const isSessionEnded = hudState ? !hudState.isRunning && !hudState.isPaused : false;
+  const currentCard = allKeywordsCompleted ? null : keywordCards[currentKeywordIndex] ?? null;
   const breathSegments = session?.breathScript?.segments ?? [];
   const detectionTranscript = interimTranscript || finalTranscript;
-  const liveSpokenKeywordCount = useMemo(
-    () => extractSpokenKeywords(detectionTranscript, keywordCards).length,
-    [detectionTranscript, keywordCards],
-  );
+  const liveSpokenKeywordCount = useMemo(() => extractSpokenKeywords(
+    detectionTranscript,
+    keywordCards,
+  ).length, [detectionTranscript, keywordCards]);
+  const transcriptTimeline = useTranscriptTimeline({ elapsedSec, finalTranscript, keywordCards });
   const detectionKeyword =
     hudMode === "keyword" && !allKeywordsCompleted
       ? (currentCard?.keyword ?? null)
@@ -240,6 +238,7 @@ export function PracticeScreen() {
     const practiceSignals = createPracticeSignals({
       transcript: completionTranscript,
       keywordCards,
+      transcriptTimeline: transcriptTimeline.timeline,
       cameraSnapshot: cameraSignals.getSummary(),
       soundCueEnabled: isSoundEnabled,
     });

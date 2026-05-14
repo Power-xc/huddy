@@ -4,7 +4,7 @@
 
 HUDdy is an AI speaking navigator for English presentation practice. The product helps a speaker rehearse with a quiet on-screen HUD that shows the current keyword, subtle timing, breath, and flow cues while keeping the center speaking area visually calm.
 
-The product has completed the P0 placeholder MVP, the P0-B camera self-view milestone, and the Breath Script HUD Mode. UI/UX polish and keyword progress tracking are also complete.
+The product has completed the P0 placeholder MVP, the P0-B camera self-view milestone, the Breath Script HUD Mode, and the P3 usability signal layer. UI/UX polish and keyword progress tracking are also complete.
 
 ## Current Completed Scope
 
@@ -42,7 +42,7 @@ The P0 flow supports:
 - Keyword detection (`detectKeyword` pure utility, `useKeywordDetection` hook). Auto-advances HUD keyword on speech match with 400 ms visual flash in keyword mode. Auto-advances breath cue when current segment phrase is detected in speech.
 - STT transcript saved to `PracticeSession.transcript` at session end.
 - Real AI integration: `/api/ai/keywords`, `/api/ai/breath-script`, `/api/ai/report` route handlers using `claude-haiku-4-5-20251001` for keywords/breath and `claude-sonnet-4-6` for report. Activated via `NEXT_PUBLIC_AI_MODE=real`. Mock fallback remains default.
-- P3 usability layer: HUD sound cues, spoken keyword extraction from transcript, local camera attention/mouth-movement heuristics, and Practice Signal Report are implemented.
+- P3 usability layer: HUD sound cues, spoken keyword extraction from transcript, local MediaPipe-powered camera attention/mouth-movement analysis with fallback sampling, transcript timeline replay, and Practice Signal Report are implemented.
 
 ## HUD Mode Selection
 
@@ -72,9 +72,10 @@ The P0 flow supports:
 - Transcript state lives in PracticeScreen local state, not Zustand.
 - Transcript is persisted to `PracticeSession.transcript` only at session end.
 - Practice signal summaries are persisted to `PracticeSession.practiceSignals` only at session end; raw camera frames are never saved.
+- Transcript timeline replay is derived in `useTranscriptTimeline` from final STT text and stored only as text snippets plus matched route keywords.
 - AI routing: `aiCoachAdapter` from `src/entities/adapters/aiAdapter.ts` selects real vs mock based on `NEXT_PUBLIC_AI_MODE`. Import `aiCoachAdapter`, not `mockAiCoachAdapter`, in screens.
 - Real AI calls are server-side only through Next.js route handlers. API keys never live in client components.
-- `src/features/camera` owns local camera signal analysis (`useCameraSignalAnalysis`). It stores only aggregate scores and feedback text.
+- `src/features/camera` owns local camera signal analysis (`useCameraSignalAnalysis`). It uses MediaPipe Tasks Vision in the browser when available, falls back to lightweight frame sampling when unavailable, and stores only aggregate scores and feedback text.
 - `src/features/hud` owns HUD sound cues (`useHudSoundCue`). Sound cues are playback-only and do not capture audio.
 
 ## Important Constraints
@@ -87,7 +88,7 @@ The P0 flow supports:
 - Do not persist HUD runtime state.
 - Do not put timer side effects in `useHUDStore`.
 - Camera self-view (getUserMedia, `video` only, `audio: false`) is now part of P0-B scope and is implemented.
-- Do not add recorder, raw audio upload, MediaPipe, auth, DB, or payment.
+- Do not add recorder, raw audio upload, remote video analysis, auth, DB, or payment.
 - Do not add shadcn/ui.
 - Do not use TypeScript `any`.
 - Inline hex colors are forbidden outside token source files.
@@ -95,6 +96,7 @@ The P0 flow supports:
 - Transcript state must not be stored in Zustand or persisted mid-session.
 - Raw camera frames, images, and streams must not be persisted or uploaded.
 - Camera signal analysis must remain local and must not identify a person.
+- MediaPipe usage is local browser-side signal analysis only; do not add identity, emotion, or person-identification features.
 - `useKeywordDetection` must not be called in breath mode for keyword detection, and must not be called in keyword mode for breath detection.
 - Never call Anthropic API directly from client components; use Next.js route handlers.
 - `ANTHROPIC_API_KEY` is server-only. `NEXT_PUBLIC_AI_MODE` is the only public AI mode env var.
@@ -142,6 +144,7 @@ The P0 flow supports:
 - Practice handles missing session safely.
 - Practice initializes HUD runtime state from a valid `PracticeSession`.
 - Practice shows a live camera self-view via `getUserMedia` (`video` only, `audio: false`, no recording, no upload). Camera is entirely browser-local. If denied or unavailable, the practice room remains fully usable.
+- Practice analyzes camera direction and mouth movement locally with MediaPipe landmarks when available, then falls back to lightweight frame sampling.
 - Practice shows the HUD overlay.
 - Practice shows only the current keyword, not the full script.
 - Practice timer increments through `usePracticeTimer`.
@@ -152,6 +155,7 @@ The P0 flow supports:
 - Report sets `completedAt` and updates `updatedAt`.
 - Report can be reopened without regenerating saved report data.
 - Report keyword progress shows real count from HUD runtime state (not `card.isUsed`, which is never set in P0).
+- Report shows Practice Signal analysis and a recent transcript replay with route keyword highlights when STT data exists.
 - Progress reads completed sessions from storage.
 - Progress shows completed sessions and routes them to saved reports.
 - Empty or corrupted local storage is handled with safe fallbacks.
@@ -159,7 +163,7 @@ The P0 flow supports:
 ## What Not To Change
 
 - Do not call real AI APIs directly from client components.
-- Do not add recording, raw audio upload, or MediaPipe.
+- Do not add recording, raw audio upload, or remote video analysis.
 - Do not add backend persistence.
 - Do not add auth, DB, or payment.
 - Do not add shadcn/ui.
@@ -182,14 +186,15 @@ The P0 flow supports:
 - **P1-6 Breath cue auto-advance** — second `useKeywordDetection` call detects current `BreathSegment.text` in speech and calls `nextBreathCue` immediately.
 - **P2-1 Transcript persistence** — `PracticeSession.transcript` field; saved at session end so ReportScreen can pass it to AI.
 - **P2-2/3/4 Real AI (Claude)** — three Next.js route handlers; `aiCoachAdapter` factory with mock fallback; activated by `NEXT_PUBLIC_AI_MODE=real`.
-- **P3 Usability Signals** — HUD sound cues, spoken keyword extraction, local camera attention/mouth-movement heuristics, and report-side Practice Signal analysis.
+- **P3 Usability Signals** — HUD sound cues, spoken keyword extraction, local camera attention/mouth-movement analysis, transcript timeline replay, and report-side Practice Signal analysis.
+- **P3 MediaPipe Local Signals** — browser-only MediaPipe Tasks Vision landmark analysis for camera direction and mouth movement, with fallback sampling when model loading is unavailable.
 
 ## Recommended Next Phase
 
 Suggested order:
 
-1. P3: Manual QA on Chrome and Safari for Web Speech API, camera permission, sound cue playback, and camera signal fallbacks.
-2. P3: Session replay — show transcript timeline with detected keywords highlighted on the Report screen.
+1. P3: Manual QA on Chrome and Safari for Web Speech API, camera permission, sound cue playback, MediaPipe model loading, and fallback sampling.
+2. P3: Calibrate attention/mouth thresholds with real practice samples and adjust scoring copy.
 3. P3: Progressive keyword difficulty — track which keywords were auto-detected vs manually advanced across sessions; surface in Progress page.
 4. P4: Multi-language support — allow memo input and hint display in languages other than Korean.
-5. Keep recording, raw audio upload, MediaPipe, backend auth, DB, and payment out of scope until explicitly scoped.
+5. Keep recording, raw audio upload, remote video analysis, backend auth, DB, and payment out of scope until explicitly scoped.

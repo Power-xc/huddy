@@ -91,10 +91,18 @@ export type SpokenKeywordInsight = {
   isRouteKeyword: boolean;
 };
 
+export type TranscriptTimelineItem = {
+  id: string;
+  text: string;
+  elapsedSec: number;
+  matchedKeywords: string[];
+};
+
 export type PracticeSignalSummary = {
   spokenKeywords: SpokenKeywordInsight[];
   matchedRouteKeywords: string[];
   missedRouteKeywords: string[];
+  transcriptTimeline: TranscriptTimelineItem[];
   cameraAttentionScore: number | null;
   mouthMovementScore: number | null;
   cameraFeedback: string;

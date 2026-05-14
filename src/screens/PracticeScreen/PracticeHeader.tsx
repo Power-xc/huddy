@@ -26,11 +26,15 @@ export function PracticeHeader({
         {isSTTSupported && (
           <span
             className={[
-              "h-2 w-2 rounded-full transition-colors",
-              isListening ? "bg-primary" : "bg-border",
+              "rounded-full border px-3 py-1 font-mono text-xs transition-colors",
+              isListening
+                ? "border-primary text-primary"
+                : "border-border text-text-muted",
             ].join(" ")}
             title={isListening ? "마이크 인식 중" : "마이크 대기"}
-          />
+          >
+            {isListening ? "MIC LIVE" : "MIC IDLE"}
+          </span>
         )}
         <Button onClick={onToggleSound} size="sm" variant="ghost">
           {isSoundEnabled ? "Sound on" : "Sound off"}

@@ -176,6 +176,12 @@ export class RealAiCoachAdapter implements AICoachAdapter {
         cameraAttentionScore:
           session.practiceSignals?.cameraAttentionScore ?? null,
         mouthMovementScore: session.practiceSignals?.mouthMovementScore ?? null,
+        transcriptTimeline:
+          session.practiceSignals?.transcriptTimeline.slice(-8).map((item) => ({
+            elapsedSec: item.elapsedSec,
+            text: item.text,
+            matchedKeywords: item.matchedKeywords,
+          })) ?? [],
       },
       isReportResponse,
       "report generation failed",
