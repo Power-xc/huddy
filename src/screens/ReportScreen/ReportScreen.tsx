@@ -193,7 +193,7 @@ export function ReportScreen() {
           </h1>
           <p className="mt-3 text-text-secondary">{practiceSession.title}</p>
         </div>
-        <ReportActions sessionId={practiceSession.id} />
+        <ReportActions session={practiceSession} sessionId={practiceSession.id} />
       </header>
 
       <ReportSummary session={practiceSession} />
