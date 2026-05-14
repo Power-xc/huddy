@@ -18,6 +18,7 @@ export type HUDOverlayProps = {
   totalKeywords?: number;
   onNextKeyword?: () => void;
   allKeywordsCompleted?: boolean;
+  isKeywordDetecting?: boolean;
   hudMode?: "keyword" | "breath";
   breathSegments?: BreathSegment[];
   currentBreathCueIndex?: number;
@@ -37,6 +38,7 @@ export function HUDOverlay({
   totalKeywords,
   onNextKeyword,
   allKeywordsCompleted = false,
+  isKeywordDetecting = false,
   hudMode,
   breathSegments,
   currentBreathCueIndex = 0,
@@ -76,6 +78,7 @@ export function HUDOverlay({
           <HUDKeywordCard
             currentCard={cardForDisplay}
             currentIndex={indexForDisplay}
+            isDetecting={isKeywordDetecting}
             onNext={onNextKeyword ?? (() => undefined)}
             totalCount={totalCount}
           />

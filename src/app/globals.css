@@ -2,8 +2,7 @@
 @import "../shared/tokens/tokens.css";
 
 :root {
-  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', 'Courier New',
-    monospace;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 }
 
 html,

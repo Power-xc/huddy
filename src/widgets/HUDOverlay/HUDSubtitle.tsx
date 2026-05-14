@@ -11,10 +11,17 @@ export function HUDSubtitle({ label = "..." }: HUDSubtitleProps) {
     <GlassCard
       className={[
         "px-5 py-2 text-center",
-        isPlaceholder ? "opacity-45" : "opacity-70",
+        isPlaceholder ? "opacity-40" : "opacity-80",
       ].join(" ")}
     >
-      <p className="truncate text-xs text-text-muted">{label}</p>
+      <p
+        className={[
+          "truncate text-xs",
+          isPlaceholder ? "text-text-muted" : "text-text-secondary",
+        ].join(" ")}
+      >
+        {label}
+      </p>
     </GlassCard>
   );
 }

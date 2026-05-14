@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { mockAiCoachAdapter } from "@entities/adapters";
+import { aiCoachAdapter } from "@entities/adapters";
 import type { BreathScript, KeywordCard, PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
@@ -83,7 +83,7 @@ export function PrepareScreen() {
 
     try {
       // 한국어 메모로 생각을 먼저 정리한 뒤 영어 키워드로 압축해야 발표 중 인지 부담이 줄어든다.
-      const generatedCards = await mockAiCoachAdapter.generateKeywordCards(
+      const generatedCards = await aiCoachAdapter.generateKeywordCards(
         memoKo,
         session.category,
       );
@@ -110,7 +110,7 @@ export function PrepareScreen() {
     try {
       // 전체 대본 대신 키워드 루트를 쓰면 발표자가 화면을 읽지 않고 흐름만 따라갈 수 있다.
       const generatedBreathScript =
-        await mockAiCoachAdapter.generateBreathScript(memoKo, keywordCards);
+        await aiCoachAdapter.generateBreathScript(memoKo, keywordCards);
       const updatedSession = storage.updateSession(session.id, {
         memoKo,
         keywordCards,
