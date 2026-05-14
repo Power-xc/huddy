@@ -97,6 +97,7 @@ export type PracticeSession = {
   memoKo: string;
   keywordCards: KeywordCard[];
   breathScript: BreathScript | null;
+  transcript: string | null;
   report: SessionReport | null;
   recording: RecordingMetadata | null;
   status: PracticeSessionStatus;

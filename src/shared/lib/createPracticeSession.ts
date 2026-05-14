@@ -39,6 +39,7 @@ export function createPracticeSession({
     memoKo: "",
     keywordCards: [],
     breathScript: null,
+    transcript: null,
     report: null,
     recording: null,
     status: "draft",

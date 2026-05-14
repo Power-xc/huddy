@@ -38,6 +38,10 @@ The P0 flow supports:
 - Saving completed status and report data.
 - Showing completed sessions on Home and Progress.
 - Reopening a completed report without regenerating it.
+- Live speech recognition via Web Speech API (`useSpeechRecognition` in `src/features/speech`). Transcript shown in HUD subtitle bar. Mic status dot in practice header.
+- Keyword detection (`detectKeyword` pure utility, `useKeywordDetection` hook). Auto-advances HUD keyword on speech match with 400 ms visual flash in keyword mode. Auto-advances breath cue when current segment phrase is detected in speech.
+- STT transcript saved to `PracticeSession.transcript` at session end.
+- Real AI integration: `/api/ai/keywords`, `/api/ai/breath-script`, `/api/ai/report` route handlers using `claude-haiku-4-5-20251001` for keywords/breath and `claude-sonnet-4-6` for report. Activated via `NEXT_PUBLIC_AI_MODE=real`. Mock fallback remains default.
 
 ## HUD Mode Selection
 
@@ -63,6 +67,11 @@ The P0 flow supports:
 - HUD runtime state is not persisted.
 - Report generation belongs to the Report screen, not Practice.
 - Mock adapters are used for P0 AI-like behavior.
+- `src/features/speech` owns STT (`useSpeechRecognition`) and detection (`detectKeyword`, `useKeywordDetection`).
+- Transcript state lives in PracticeScreen local state, not Zustand.
+- Transcript is persisted to `PracticeSession.transcript` only at session end.
+- AI routing: `aiCoachAdapter` from `src/entities/adapters/aiAdapter.ts` selects real vs mock based on `NEXT_PUBLIC_AI_MODE`. Import `aiCoachAdapter`, not `mockAiCoachAdapter`, in screens.
+- Real AI calls are server-side only through Next.js route handlers. API keys never live in client components.
 
 ## Important Constraints
 
@@ -74,12 +83,15 @@ The P0 flow supports:
 - Do not persist HUD runtime state.
 - Do not put timer side effects in `useHUDStore`.
 - Camera self-view (getUserMedia, `video` only, `audio: false`) is now part of P0-B scope and is implemented.
-- Do not add recorder, audio capture, STT, or MediaPipe.
-- Do not add backend, auth, DB, or payment.
+- Do not add recorder, raw audio upload, MediaPipe, auth, DB, or payment.
 - Do not add shadcn/ui.
 - Do not use TypeScript `any`.
 - Inline hex colors are forbidden outside token source files.
 - Forbidden vision-identification terms must not appear in `src`.
+- Transcript state must not be stored in Zustand or persisted mid-session.
+- `useKeywordDetection` must not be called in breath mode for keyword detection, and must not be called in keyword mode for breath detection.
+- Never call Anthropic API directly from client components; use Next.js route handlers.
+- `ANTHROPIC_API_KEY` is server-only. `NEXT_PUBLIC_AI_MODE` is the only public AI mode env var.
 - Existing docs and folders must be preserved unless explicitly requested:
   - `SPEC.md`
   - `BRAND_GUIDE.md`
@@ -141,8 +153,8 @@ The P0 flow supports:
 ## What Not To Change
 
 - Do not change the P0 placeholder MVP scope into a real capture or analysis product yet.
-- Do not add real AI APIs.
-- Do not add recording, audio capture, STT, or MediaPipe.
+- Do not call real AI APIs directly from client components.
+- Do not add recording, raw audio upload, or MediaPipe.
 - Do not add backend persistence.
 - Do not add auth, DB, or payment.
 - Do not add shadcn/ui.
@@ -160,12 +172,18 @@ The P0 flow supports:
 - **Keyword progress patch** — ReportScreen reads HUD runtime state to compute real keyword count.
 - **P0-B camera self-view** — `getUserMedia` live preview in PracticeScreen, browser-only, no recording. Camera `srcObject` reliability fix: `videoRef.current` is assigned via `useEffect([status])` after `<video>` mounts.
 - **Breath Script HUD Mode** — `HUDBreathCue` component, `hudMode`/`currentBreathCueIndex`/`allBreathCuesCompleted` in `useHUDStore`, auto-mode-select in `PracticeScreen`.
+- **P1-1 Web Speech API STT** — `useSpeechRecognition` hook, auto-start in PracticeScreen, live subtitle, mic status dot. Continuous with auto-restart.
+- **P1-2/3 Keyword detection + auto-advance** — `detectKeyword` utility, `useKeywordDetection` hook, keyword mode auto-advance with 400 ms pulse flash.
+- **P1-6 Breath cue auto-advance** — second `useKeywordDetection` call detects current `BreathSegment.text` in speech and calls `nextBreathCue` immediately.
+- **P2-1 Transcript persistence** — `PracticeSession.transcript` field; saved at session end so ReportScreen can pass it to AI.
+- **P2-2/3/4 Real AI (Claude)** — three Next.js route handlers; `aiCoachAdapter` factory with mock fallback; activated by `NEXT_PUBLIC_AI_MODE=real`.
 
 ## Recommended Next Phase
 
 Suggested order:
 
-1. P1: Real speech-to-text transcription (Web Speech API or Whisper).
-2. P1: Keyword detection against live transcript.
-3. P1: Auto-advance keyword on detection.
-4. Keep recording, audio upload, MediaPipe, backend, auth, DB, and payment out of scope until later phases.
+1. P3: Pronunciation scoring — compare spoken words from transcript against keyword pronunciations using phoneme similarity (client-side, no backend).
+2. P3: Session replay — show transcript timeline with detected keywords highlighted on the Report screen.
+3. P3: Progressive keyword difficulty — track which keywords were auto-detected vs manually advanced across sessions; surface in Progress page.
+4. P4: Multi-language support — allow memo input and hint display in languages other than Korean.
+5. Keep recording, audio upload, MediaPipe, backend auth, DB, and payment out of scope until explicitly scoped.

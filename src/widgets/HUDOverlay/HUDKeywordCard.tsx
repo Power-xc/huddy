@@ -6,6 +6,7 @@ export type HUDKeywordCardProps = {
   currentIndex: number;
   totalCount: number;
   onNext: () => void;
+  isDetecting?: boolean;
 };
 
 export function HUDKeywordCard({
@@ -13,6 +14,7 @@ export function HUDKeywordCard({
   currentIndex,
   totalCount,
   onNext,
+  isDetecting = false,
 }: HUDKeywordCardProps) {
   const isCompleted = !currentCard && totalCount > 0;
   const isLastKeyword = currentIndex >= totalCount - 1;
@@ -43,9 +45,11 @@ export function HUDKeywordCard({
     <GlassCard className="grid gap-3 px-5 py-4 text-center">
       {/* 한 번에 하나만 보여 발표자가 화면을 읽는 대신 현재 cue만 확인하도록 한다. */}
       <div>
-        <p className="font-mono text-xs uppercase text-text-secondary">
-          Route {currentIndex + 1} / {totalCount}
-        </p>
+        <div>
+          <p className="font-mono text-xs uppercase text-text-secondary">
+            Route {currentIndex + 1} / {totalCount}
+          </p>
+        </div>
         <div className="mx-auto mt-2 flex w-40 items-center justify-center gap-1">
           {Array.from({ length: totalCount }, (_, index) => (
             <span
@@ -57,7 +61,13 @@ export function HUDKeywordCard({
             />
           ))}
         </div>
-        <p className="mt-1 truncate font-heading text-2xl font-semibold text-primary">
+        <p
+          className={[
+            "mt-1 truncate font-heading text-2xl font-semibold text-primary",
+            "rounded-md px-2 py-0.5 transition-all",
+            isDetecting ? "animate-pulse ring-1 ring-primary" : "",
+          ].join(" ")}
+        >
           {currentCard.keyword}
         </p>
         <p className="mt-1 text-sm text-text-secondary">

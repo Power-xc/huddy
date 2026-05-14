@@ -1,8 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useHUDStore, usePracticeTimer } from "@features/hud";
+import { useKeywordDetection, useSpeechRecognition } from "@features/speech";
 import type { PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
@@ -18,6 +19,11 @@ export function PracticeScreen() {
   const sessionId = useMemo(() => getSessionId(params.id), [params.id]);
   const [session, setSession] = useState<PracticeSession | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isKeywordDetecting, setIsKeywordDetecting] = useState(false);
+  const [keywordDetectingCardId, setKeywordDetectingCardId] = useState<
+    string | null
+  >(null);
+  const keywordFlashTimeoutRef = useRef<number | null>(null);
   const hudState = useHUDStore((state) => state.hudState);
   const keywordCards = useHUDStore((state) => state.keywordCards);
   const allKeywordsCompleted = useHUDStore(
@@ -38,6 +44,62 @@ export function PracticeScreen() {
   const resetHUD = useHUDStore((state) => state.reset);
 
   usePracticeTimer();
+
+  const {
+    interimTranscript,
+    finalTranscript,
+    isListening,
+    isSupported: isSTTSupported,
+    startListening,
+    stopListening,
+  } = useSpeechRecognition();
+
+  const currentKeywordIndex = hudState?.currentKeywordIndex ?? 0;
+  const elapsedSec = hudState?.elapsedSec ?? 0;
+  const isSessionEnded = hudState
+    ? !hudState.isRunning && !hudState.isPaused
+    : false;
+  const currentCard = allKeywordsCompleted
+    ? null
+    : keywordCards[currentKeywordIndex] ?? null;
+  const breathSegments = session?.breathScript?.segments ?? [];
+  const detectionTranscript = interimTranscript || finalTranscript;
+  const detectionKeyword =
+    hudMode === "keyword" && !allKeywordsCompleted
+      ? (currentCard?.keyword ?? null)
+      : null;
+  const isCurrentCardDetecting =
+    isKeywordDetecting && keywordDetectingCardId === currentCard?.id;
+
+  useKeywordDetection({
+    transcript: detectionTranscript,
+    keyword: detectionKeyword,
+    onDetected: () => {
+      if (keywordFlashTimeoutRef.current !== null) {
+        window.clearTimeout(keywordFlashTimeoutRef.current);
+      }
+
+      setIsKeywordDetecting(true);
+      setKeywordDetectingCardId(currentCard?.id ?? null);
+      keywordFlashTimeoutRef.current = window.setTimeout(() => {
+        setIsKeywordDetecting(false);
+        setKeywordDetectingCardId(null);
+        nextKeyword();
+        keywordFlashTimeoutRef.current = null;
+      }, 400);
+    },
+  });
+
+  const currentBreathSegment =
+    hudMode === "breath" && !allBreathCuesCompleted
+      ? (breathSegments[currentBreathCueIndex] ?? null)
+      : null;
+
+  useKeywordDetection({
+    transcript: detectionTranscript,
+    keyword: currentBreathSegment?.text ?? null,
+    onDetected: () => nextBreathCue(breathSegments.length),
+  });
 
   useEffect(() => {
     let isActive = true;
@@ -72,6 +134,20 @@ export function PracticeScreen() {
     };
   }, [resetHUD, sessionId, setHudMode, startSession]);
 
+  useEffect(() => {
+    if (!isLoaded || !session || !isSTTSupported) return;
+    startListening();
+    return () => stopListening();
+  }, [isLoaded, isSTTSupported, session, startListening, stopListening]);
+
+  useEffect(() => {
+    return () => {
+      if (keywordFlashTimeoutRef.current !== null) {
+        window.clearTimeout(keywordFlashTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (!isLoaded) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-4xl items-center px-5">
@@ -102,19 +178,18 @@ export function PracticeScreen() {
     );
   }
 
-  const currentKeywordIndex = hudState?.currentKeywordIndex ?? 0;
-  const elapsedSec = hudState?.elapsedSec ?? 0;
-  const isSessionEnded = hudState
-    ? !hudState.isRunning && !hudState.isPaused
-    : false;
-  const currentCard = allKeywordsCompleted
-    ? null
-    : keywordCards[currentKeywordIndex] ?? null;
-  const breathSegments = session.breathScript?.segments ?? [];
+  const recentFinal = finalTranscript
+    ? finalTranscript.split(" ").slice(-8).join(" ")
+    : "";
+  const subtitleText = interimTranscript || recentFinal || "...";
 
   const handleCompletePractice = () => {
     if (!isSessionEnded) {
       endSession();
+    }
+
+    if (finalTranscript.trim().length > 0) {
+      storage.updateSession(session.id, { transcript: finalTranscript.trim() });
     }
 
     router.push(`/session/${session.id}/report`);
@@ -129,10 +204,19 @@ export function PracticeScreen() {
       }}
     >
       <header className="absolute left-0 right-0 top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-4">
-        <div className="justify-self-start">
+        <div className="flex items-center gap-2 justify-self-start">
           <p className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary">
             Practice
           </p>
+          {isSTTSupported && (
+            <span
+              className={[
+                "h-2 w-2 rounded-full transition-colors",
+                isListening ? "bg-primary" : "bg-border",
+              ].join(" ")}
+              title={isListening ? "마이크 인식 중" : "마이크 대기"}
+            />
+          )}
         </div>
         <h1 className="max-w-lg truncate text-center font-heading text-lg font-semibold text-text">
           {session.title}
@@ -157,9 +241,10 @@ export function PracticeScreen() {
         currentKeywordIndex={currentKeywordIndex}
         elapsedSec={elapsedSec}
         hudMode={hudMode}
+        isKeywordDetecting={isCurrentCardDetecting}
         onNextBreathCue={() => nextBreathCue(breathSegments.length)}
         onNextKeyword={nextKeyword}
-        subtitleLabel="..."
+        subtitleLabel={subtitleText}
         targetDurationMin={session.targetDurationMin}
         title={session.title}
         totalKeywords={keywordCards.length}

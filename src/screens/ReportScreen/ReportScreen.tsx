@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { mockAiCoachAdapter } from "@entities/adapters";
+import { aiCoachAdapter } from "@entities/adapters";
 import { useHUDStore } from "@features/hud";
 import { formatTime } from "@shared/lib/formatTime";
 import { storage } from "@shared/lib/storage";
@@ -10,6 +10,7 @@ import type { PracticeSession } from "@shared/types";
 import { Button, GlassCard } from "@shared/ui";
 import { ReportFeedbackList } from "@widgets/ReportFeedbackList";
 import { ReportSummary } from "@widgets/ReportSummary";
+import { ReportActions } from "./ReportActions";
 
 type ReportLoadState = "loading" | "generating" | "ready" | "error";
 
@@ -54,7 +55,7 @@ export function ReportScreen() {
       try {
         // 발표 중에는 말하기에 집중하고, 리포트 생성은 종료 뒤에 처리해 HUD 부담을 늘리지 않는다.
         const generatedReport =
-          await mockAiCoachAdapter.generateReport(storedPracticeSession);
+          await aiCoachAdapter.generateReport(storedPracticeSession);
 
         if (!isActive) {
           return;
@@ -175,17 +176,7 @@ export function ReportScreen() {
               잠시 뒤 다시 시도해주세요.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={() => router.push("/")}>홈으로</Button>
-            <Button
-              onClick={() =>
-                router.push(`/session/${practiceSession.id}/prepare`)
-              }
-              variant="ghost"
-            >
-              다시 연습
-            </Button>
-          </div>
+          <ReportActions sessionId={practiceSession.id} showProgress={false} />
         </GlassCard>
       </main>
     );
@@ -201,18 +192,7 @@ export function ReportScreen() {
           </h1>
           <p className="mt-3 text-text-secondary">{practiceSession.title}</p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={() => router.push("/")}>홈으로</Button>
-          <Button onClick={() => router.push("/progress")} variant="secondary">
-            진행 현황 보기
-          </Button>
-          <Button
-            onClick={() => router.push(`/session/${practiceSession.id}/prepare`)}
-            variant="ghost"
-          >
-            다시 연습
-          </Button>
-        </div>
+        <ReportActions sessionId={practiceSession.id} />
       </header>
 
       <ReportSummary session={practiceSession} />
