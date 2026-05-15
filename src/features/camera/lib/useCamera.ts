@@ -60,7 +60,12 @@ export function useCamera(): UseCameraResult {
     try {
       // 영상만 요청한다 — 오디오 캡처는 P0 범위 밖이다.
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
+        video: {
+          facingMode: "user",
+          width: { ideal: 640, max: 1280 },
+          height: { ideal: 480, max: 720 },
+          frameRate: { ideal: 24, max: 30 },
+        },
         audio: false,
       });
 

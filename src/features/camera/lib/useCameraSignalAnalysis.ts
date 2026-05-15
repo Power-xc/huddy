@@ -34,7 +34,9 @@ export function useCameraSignalAnalysis(
   const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const landmarkerPromiseRef = useRef<Promise<FaceLandmarker> | null>(null);
   const statsRef = useRef<RunningStats>(createInitialStats());
+  const isSamplingRef = useRef(false);
   const [snapshot, setSnapshot] = useState<CameraSignalSnapshot>(emptySnapshot);
+  const [sampleIntervalMs, setSampleIntervalMs] = useState(300);
 
   const getLandmarker = useCallback(async () => {
     if (statsRef.current.landmarkerFailed) return null;
@@ -54,23 +56,51 @@ export function useCameraSignalAnalysis(
 
   const sampleVideo = useCallback(async () => {
     const video = videoRef.current;
-    if (!enabled || !video || video.readyState < 2) return;
-
-    const landmarker = await getLandmarker();
-    const didUseLandmarks = landmarker
-      ? applyLandmarkSample(
-          landmarker.detectForVideo(video, performance.now()),
-          statsRef.current,
-        )
-      : false;
-
-    if (!didUseLandmarks) {
-      applyFallbackSample(video, canvasRef, statsRef.current);
+    if (
+      !enabled ||
+      !video ||
+      video.readyState < 2 ||
+      isSamplingRef.current ||
+      document.visibilityState === "hidden"
+    ) {
+      return;
     }
 
-    statsRef.current.samples += 1;
-    setSnapshot(createSnapshot(statsRef.current, enabled));
+    isSamplingRef.current = true;
+
+    try {
+      const landmarker = await getLandmarker();
+      const didUseLandmarks = landmarker
+        ? applyLandmarkSample(
+            landmarker.detectForVideo(video, performance.now()),
+            statsRef.current,
+          )
+        : false;
+
+      if (!didUseLandmarks) {
+        applyFallbackSample(video, canvasRef, statsRef.current);
+      }
+
+      statsRef.current.samples += 1;
+      setSnapshot(createSnapshot(statsRef.current, enabled));
+    } finally {
+      isSamplingRef.current = false;
+    }
   }, [enabled, getLandmarker, videoRef]);
+
+  useEffect(() => {
+    const updateInterval = () => {
+      setSampleIntervalMs(
+        window.matchMedia("(max-width: 640px)").matches ? 450 : 300,
+      );
+    };
+
+    updateInterval();
+
+    window.addEventListener("resize", updateInterval);
+
+    return () => window.removeEventListener("resize", updateInterval);
+  }, []);
 
   useEffect(() => {
     if (!enabled) {
@@ -80,10 +110,10 @@ export function useCameraSignalAnalysis(
 
     const intervalId = window.setInterval(() => {
       void sampleVideo();
-    }, 300);
+    }, sampleIntervalMs);
 
     return () => window.clearInterval(intervalId);
-  }, [enabled, sampleVideo]);
+  }, [enabled, sampleIntervalMs, sampleVideo]);
 
   useEffect(
     () => () => {
