@@ -11,6 +11,7 @@ import { Button, GlassCard } from "@shared/ui";
 import { ReportFeedbackList } from "@widgets/ReportFeedbackList";
 import { ReportSummary } from "@widgets/ReportSummary";
 import { PracticeSignalReport } from "@widgets/PracticeSignalReport";
+import { ScriptInsightPanel } from "@widgets/ScriptInsightPanel";
 import { ReportActions } from "./ReportActions";
 
 type ReportLoadState = "loading" | "generating" | "ready" | "error";
@@ -197,6 +198,11 @@ export function ReportScreen() {
       </header>
 
       <ReportSummary session={practiceSession} />
+
+      <ScriptInsightPanel
+        analysis={practiceSession.scriptAnalysis}
+        assessment={practiceSession.practiceSignals?.scriptAssessment ?? null}
+      />
 
       <PracticeSignalReport signals={practiceSession.practiceSignals} />
 

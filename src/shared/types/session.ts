@@ -91,6 +91,49 @@ export type SpokenKeywordInsight = {
   isRouteKeyword: boolean;
 };
 
+export type ScriptKeywordInsight = {
+  term: string;
+  count: number;
+  kind: "word" | "phrase";
+  reasonKo: string;
+};
+
+export type ScriptVocabularyRisk = "low" | "medium" | "high";
+
+export type ScriptVocabularyInsight = {
+  word: string;
+  count: number;
+  risk: ScriptVocabularyRisk;
+  tipKo: string;
+};
+
+export type ScriptReadabilityInsight = {
+  wordCount: number;
+  sentenceCount: number;
+  avgWordsPerSentence: number;
+  longSentenceCount: number;
+  score: number;
+  feedbackKo: string;
+};
+
+export type PracticeScriptAnalysis = {
+  keywords: ScriptKeywordInsight[];
+  vocabulary: ScriptVocabularyInsight[];
+  readability: ScriptReadabilityInsight;
+  createdAt: string;
+};
+
+export type ScriptReadAloudAssessment = {
+  coverageScore: number;
+  pronunciationScore: number;
+  matchedWordCount: number;
+  totalWordCount: number;
+  missedWords: string[];
+  unclearWords: string[];
+  feedbackKo: string;
+  createdAt: string;
+};
+
 export type TranscriptTimelineItem = {
   id: string;
   text: string;
@@ -121,6 +164,7 @@ export type PracticeSignalSummary = {
   lookDownRatio: number | null;
   readingPostureRiskScore: number | null;
   pauseRhythmScore: number | null;
+  scriptAssessment: ScriptReadAloudAssessment | null;
   cameraFeedback: string;
   mouthFeedback: string;
   postureFeedback: string;
@@ -140,6 +184,8 @@ export type PracticeSession = {
   targetDurationMin: 1 | 3 | 5 | 10;
   weekNumber: number;
   memoKo: string;
+  scriptText: string;
+  scriptAnalysis: PracticeScriptAnalysis | null;
   keywordCards: KeywordCard[];
   breathScript: BreathScript | null;
   transcript: string | null;

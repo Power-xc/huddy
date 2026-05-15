@@ -10,6 +10,7 @@ type KeywordCardDraft = {
 type KeywordRequestBody = {
   memoKo: string;
   category: PracticeSessionCategory;
+  scriptText?: string;
 };
 
 const categories: PracticeSessionCategory[] = [
@@ -23,10 +24,22 @@ const isCategory = (value: unknown): value is PracticeSessionCategory =>
   typeof value === "string" &&
   categories.includes(value as PracticeSessionCategory);
 
-const isRequestBody = (value: unknown): value is KeywordRequestBody =>
-  isRecord(value) &&
-  typeof value.memoKo === "string" &&
-  isCategory(value.category);
+const isRequestBody = (value: unknown): value is KeywordRequestBody => {
+  if (!isRecord(value) || typeof value.memoKo !== "string") {
+    return false;
+  }
+
+  const scriptText =
+    typeof value.scriptText === "string" ? value.scriptText : "";
+
+  return (
+    value.memoKo.length <= 1000 &&
+    scriptText.length <= 4000 &&
+    (value.memoKo.trim().length > 0 || scriptText.trim().length > 0) &&
+    isCategory(value.category) &&
+    (value.scriptText === undefined || typeof value.scriptText === "string")
+  );
+};
 
 const isKeywordDraft = (value: unknown): value is KeywordCardDraft =>
   isRecord(value) &&
@@ -38,11 +51,17 @@ const isKeywordDraft = (value: unknown): value is KeywordCardDraft =>
 const isKeywordDraftArray = (value: unknown): value is KeywordCardDraft[] =>
   Array.isArray(value) && value.length === 6 && value.every(isKeywordDraft);
 
-const buildPrompt = ({ memoKo, category }: KeywordRequestBody): string => `
+const buildPrompt = ({
+  memoKo,
+  category,
+  scriptText = "",
+}: KeywordRequestBody): string => `
 Korean memo: ${memoKo}
+User's English script: ${scriptText || "none"}
 Category: ${category}
 
-Generate exactly 6 English keyword cards for a ${category} presentation based on this memo.
+Generate exactly 6 English keyword cards for a ${category} presentation based
+on the memo and the user's actual English script.
 
 Return ONLY this JSON array (no markdown, no explanation):
 [
@@ -54,7 +73,8 @@ Rules:
 - keyword: 1-3 English words, title case, no punctuation
 - hintKo: Korean description under 20 chars of what to say at this point
 - Cover opening → body → closing arc
-- Reflect the actual content of the memo`;
+- Prefer important terms that appear in the actual script when script exists
+- Reflect the actual content of the memo and script`;
 
 export async function POST(request: Request): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);

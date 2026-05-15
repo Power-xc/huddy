@@ -27,6 +27,10 @@ const isPracticeSession = (value: unknown): value is PracticeSession => {
     typeof value.targetDurationMin === "number" &&
     typeof value.weekNumber === "number" &&
     typeof value.memoKo === "string" &&
+    (value.scriptText === undefined || typeof value.scriptText === "string") &&
+    (value.scriptAnalysis === undefined ||
+      typeof value.scriptAnalysis === "object" ||
+      value.scriptAnalysis === null) &&
     Array.isArray(value.keywordCards) &&
     (value.transcript === undefined ||
       typeof value.transcript === "string" ||
@@ -61,6 +65,8 @@ export class LocalStorageAdapter implements StorageAdapter {
     return this.readJson(SESSIONS_KEY, [], isPracticeSessionArray).map(
       (session) => ({
         ...session,
+        scriptText: session.scriptText ?? "",
+        scriptAnalysis: session.scriptAnalysis ?? null,
         transcript: session.transcript ?? null,
         practiceSignals: session.practiceSignals ?? null,
       }),

@@ -6,6 +6,8 @@ export type HUDCuePlaceholderProps = {
   headStabilityScore?: number | null;
   lookDownRatio?: number | null;
   spokenKeywordCount?: number;
+  scriptCoverageScore?: number | null;
+  pronunciationScore?: number | null;
 };
 
 const formatScore = (score: number | null | undefined): string =>
@@ -17,9 +19,13 @@ export function HUDCuePlaceholder({
   headStabilityScore,
   lookDownRatio,
   spokenKeywordCount = 0,
+  scriptCoverageScore,
+  pronunciationScore,
 }: HUDCuePlaceholderProps) {
   const cueLabels = [
     `WORDS ${spokenKeywordCount}`,
+    `READ ${formatScore(scriptCoverageScore)}`,
+    `PRON ${formatScore(pronunciationScore)}`,
     `CAM ${formatScore(cameraAttentionScore)}`,
     `MOUTH ${formatScore(mouthMovementScore)}`,
     `HEAD ${formatScore(headStabilityScore)}`,

@@ -4,6 +4,10 @@ export {
   extractSpokenKeywords,
   getRouteKeywordProgress,
 } from "./lib/extractSpokenKeywords";
+export {
+  analyzePracticeScript,
+  assessScriptReadAloud,
+} from "./lib/analyzePracticeScript";
 export { useKeywordDetection } from "./lib/useKeywordDetection";
 export { useTranscriptTimeline } from "./lib/useTranscriptTimeline";
 export type { UseSpeechRecognitionResult } from "./lib/useSpeechRecognition";

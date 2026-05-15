@@ -5,6 +5,7 @@ import type {
   PracticeSessionCategory,
   SessionReport,
 } from "@shared/types";
+import { analyzePracticeScript } from "@features/speech";
 import type { AICoachAdapter } from "./aiCoachAdapter";
 
 type KeywordSeed = {
@@ -52,14 +53,55 @@ const keywordSeeds: Record<PracticeSessionCategory, KeywordSeed[]> = {
   ],
 };
 
+const chunkScriptText = (scriptText: string): string[] =>
+  scriptText
+    .split(/[.!?]+/)
+    .flatMap((sentence) => {
+      const words = sentence
+        .replace(/[^\w\s,']/g, "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      const chunks: string[] = [];
+
+      for (let index = 0; index < words.length; index += 10) {
+        chunks.push(words.slice(index, index + 10).join(" "));
+      }
+
+      return chunks;
+    })
+    .filter((segment) => segment.length > 0)
+    .slice(0, 10);
+
 export class MockAiCoachAdapter implements AICoachAdapter {
   async generateKeywordCards(
     memoKo: string,
     category: PracticeSessionCategory,
+    scriptText = "",
   ): Promise<KeywordCard[]> {
     await wait(300);
 
     const hasMemo = memoKo.trim().length > 0;
+    const scriptKeywords = analyzePracticeScript(scriptText)?.keywords ?? [];
+
+    if (scriptKeywords.length > 0) {
+      const scriptedSeeds = scriptKeywords.slice(0, 6).map((keyword) => ({
+        keyword: keyword.term,
+        hintKo: keyword.reasonKo.slice(0, 20),
+      }));
+      const mergedSeeds = [
+        ...scriptedSeeds,
+        ...keywordSeeds[category].slice(scriptedSeeds.length),
+      ].slice(0, 6);
+
+      return mergedSeeds.map((seed, index) => ({
+        id: crypto.randomUUID(),
+        order: index + 1,
+        keyword: seed.keyword,
+        hintKo: seed.hintKo,
+        isUsed: false,
+      }));
+    }
 
     return keywordSeeds[category].map((seed, index) => ({
       id: crypto.randomUUID(),
@@ -73,8 +115,24 @@ export class MockAiCoachAdapter implements AICoachAdapter {
   async generateBreathScript(
     memoKo: string,
     keywordCards: KeywordCard[],
+    scriptText = "",
   ): Promise<BreathScript> {
     await wait(300);
+
+    const scriptSegments = chunkScriptText(scriptText);
+
+    if (scriptSegments.length > 0) {
+      const segments = scriptSegments.map((text, index) => ({
+        id: crypto.randomUUID(),
+        text,
+        isBreathPoint: index > 0 && index % 2 === 0,
+      }));
+
+      return {
+        segments,
+        fullText: segments.map((segment) => segment.text).join(" / "),
+      };
+    }
 
     const fallbackText =
       keywordCards.length > 0
@@ -108,6 +166,7 @@ export class MockAiCoachAdapter implements AICoachAdapter {
     const missedRoute = session.practiceSignals?.missedRouteKeywords ?? [];
     const manualRoute =
       session.practiceSignals?.manuallyAdvancedKeywords ?? [];
+    const scriptAssessment = session.practiceSignals?.scriptAssessment ?? null;
 
     return {
       oneLineFeedback: "핵심 흐름을 유지하며 끝까지 발표를 완주했습니다.",
@@ -117,10 +176,14 @@ export class MockAiCoachAdapter implements AICoachAdapter {
         "마무리에서 다음 행동을 명확히 제시했습니다.",
       ],
       improvements: [
+        scriptAssessment
+          ? `스크립트 매칭 ${scriptAssessment.coverageScore}% 기준으로, ${scriptAssessment.missedWords[0] ?? "핵심 단어"}를 더 또렷하게 읽어보세요.`
+          : manualRoute.length > 0
+            ? `${manualRoute[0]} 키워드는 다음 연습에서 말로 직접 통과해보세요.`
+            : "중요한 문장 앞에서 한 박자 쉬면 전달력이 더 좋아집니다.",
         manualRoute.length > 0
-          ? `${manualRoute[0]} 키워드는 다음 연습에서 말로 직접 통과해보세요.`
-          : "중요한 문장 앞에서 한 박자 쉬면 전달력이 더 좋아집니다.",
-        "예시를 하나만 더 구체화하면 설득력이 높아집니다.",
+          ? "수동 전환한 구간은 문장 속에서 키워드를 직접 말해보세요."
+          : "예시를 하나만 더 구체화하면 설득력이 높아집니다.",
       ],
       breathFeedback: "긴 문장은 두 덩어리로 나누면 호흡이 더 안정됩니다.",
       flowFeedback:
@@ -128,7 +191,9 @@ export class MockAiCoachAdapter implements AICoachAdapter {
           ? `다음 연습에서는 ${missedRoute.slice(0, 2).join(", ")} 키워드를 흐름 안에 더 분명히 넣어보세요.`
           : "도입, 근거, 결론의 순서가 잘 유지되었습니다.",
       problemWords:
-        spokenWords.length > 0
+        (scriptAssessment?.unclearWords.length ?? 0) > 0
+          ? scriptAssessment?.unclearWords ?? []
+          : spokenWords.length > 0
           ? spokenWords
           : ["strategy", "priority", "evidence"],
       nextWeekMission: "같은 주제로 1분 더 짧게 발표하며 핵심만 남겨보세요.",
@@ -137,7 +202,7 @@ export class MockAiCoachAdapter implements AICoachAdapter {
         clarity: 82,
         confidence: 78,
         flow: 80,
-        pronunciation: 76,
+        pronunciation: scriptAssessment?.pronunciationScore ?? 76,
         breath: 74,
       },
       actualDurationSec:

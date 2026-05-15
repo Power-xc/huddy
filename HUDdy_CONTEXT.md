@@ -74,7 +74,7 @@ The P0 flow supports:
 - Practice signal summaries are persisted to `PracticeSession.practiceSignals` only at session end; raw camera frames are never saved.
 - Transcript timeline replay is derived in `useTranscriptTimeline` from final STT text and stored only as text snippets plus matched route keywords.
 - Keyword route progress is tracked in PracticeScreen as auto-detected vs manual advance events and persisted only at session end.
-- Local motion signals include mouth movement, mouth openness, head stability, look-down ratio, reading posture risk, and pause rhythm. Only aggregate scores and feedback text are stored.
+- Local speaking signals include mouth movement, mouth openness, head stability, look-down ratio, reading posture risk, and pause rhythm. Only aggregate scores and feedback text are stored.
 - AI routing: `aiCoachAdapter` from `src/entities/adapters/aiAdapter.ts` selects real vs mock based on `NEXT_PUBLIC_AI_MODE`. Import `aiCoachAdapter`, not `mockAiCoachAdapter`, in screens.
 - Real AI calls are server-side only through Next.js route handlers. API keys never live in client components.
 - `src/features/camera` owns local camera signal analysis (`useCameraSignalAnalysis`). It uses MediaPipe Tasks Vision in the browser when available, falls back to lightweight frame sampling when unavailable, and stores only aggregate posture/mouth scores and feedback text.
@@ -161,6 +161,7 @@ The P0 flow supports:
 - Report shows mouth openness, head stability, look-down ratio, reading posture risk, and pause rhythm when enough local signal data exists.
 - Progress shows aggregate keyword detection flow: auto-detected count, manual advance count, auto detection rate, and repeated missed route keywords.
 - Progress shows aggregate reading posture risk and average mouth openness across completed sessions.
+- Completed routes can be deleted from Progress; this removes the saved session and report from local storage.
 - Report can be exported as a local-only Markdown file from the Report actions.
 - Progress reads completed sessions from storage.
 - Progress shows completed sessions and routes them to saved reports.

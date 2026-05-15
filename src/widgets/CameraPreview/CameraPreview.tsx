@@ -32,6 +32,9 @@ export function CameraPreview({ camera, className }: CameraPreviewProps) {
             카메라는 브라우저에서만 켜지며, 영상은 저장되거나 업로드되지
             않습니다.
           </p>
+          <p className="mt-2 text-xs uppercase tracking-wide text-primary">
+            Speaking signals start after camera is on
+          </p>
         </div>
         <Button onClick={() => void startCamera()} variant="secondary">
           카메라 켜기
@@ -109,6 +112,30 @@ export function CameraPreview({ camera, className }: CameraPreviewProps) {
         ref={videoRef}
         style={isMirrored ? { transform: "scaleX(-1)" } : undefined}
       />
+      <div className="pointer-events-none absolute inset-4 rounded-3xl border border-primary/20">
+        <span className="absolute -left-px -top-px h-10 w-10 rounded-tl-3xl border-l border-t border-primary/70" />
+        <span className="absolute -right-px -top-px h-10 w-10 rounded-tr-3xl border-r border-t border-primary/70" />
+        <span className="absolute -bottom-px -left-px h-10 w-10 rounded-bl-3xl border-b border-l border-primary/70" />
+        <span className="absolute -bottom-px -right-px h-10 w-10 rounded-br-3xl border-b border-r border-primary/70" />
+      </div>
+      <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-border bg-surface/80 px-3 py-2 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+          <span className="font-mono text-xs uppercase text-primary">
+            Speaking signals active
+          </span>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute bottom-4 left-4 flex flex-wrap gap-2">
+        {["CAM", "MOUTH", "HEAD", "DOWN"].map((label) => (
+          <span
+            className="rounded-full border border-border bg-surface/75 px-2 py-1 font-mono text-xs text-text-secondary backdrop-blur-md"
+            key={label}
+          >
+            {label}
+          </span>
+        ))}
+      </div>
       <div className="absolute bottom-4 right-4 flex gap-2">
         <Button onClick={stopCamera} size="sm" variant="ghost">
           카메라 끄기

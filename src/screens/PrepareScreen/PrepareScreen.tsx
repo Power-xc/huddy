@@ -3,11 +3,13 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { aiCoachAdapter } from "@entities/adapters";
+import { analyzePracticeScript } from "@features/speech";
 import type { BreathScript, KeywordCard, PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
 import { BreathScriptView } from "@widgets/BreathScriptView";
 import { KeywordCardList } from "@widgets/KeywordCardList";
+import { ScriptInsightPanel } from "@widgets/ScriptInsightPanel";
 
 type PrepareStep = 1 | 2 | 3;
 type LoadingAction = "keywords" | "breath" | "start" | null;
@@ -37,9 +39,16 @@ export function PrepareScreen() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [step, setStep] = useState<PrepareStep>(1);
   const [memoKo, setMemoKo] = useState("");
+  const [scriptText, setScriptText] = useState("");
   const [keywordCards, setKeywordCards] = useState<KeywordCard[]>([]);
   const [breathScript, setBreathScript] = useState<BreathScript | null>(null);
   const [loading, setLoading] = useState<LoadingAction>(null);
+  const scriptAnalysis = useMemo(
+    () => analyzePracticeScript(scriptText),
+    [scriptText],
+  );
+  const hasPracticeSource =
+    memoKo.trim().length > 0 || scriptText.trim().length > 0;
 
   useEffect(() => {
     let isActive = true;
@@ -55,6 +64,7 @@ export function PrepareScreen() {
 
       setSession(storedSession);
       setMemoKo(storedSession?.memoKo ?? "");
+      setScriptText(storedSession?.scriptText ?? "");
       setKeywordCards(storedSession?.keywordCards ?? []);
       setBreathScript(storedSession?.breathScript ?? null);
       setStep(
@@ -75,20 +85,23 @@ export function PrepareScreen() {
   }, [sessionId]);
 
   const handleGenerateKeywords = async () => {
-    if (!session || memoKo.trim().length === 0) {
+    if (!session || !hasPracticeSource) {
       return;
     }
 
     setLoading("keywords");
 
     try {
-      // 한국어 메모로 생각을 먼저 정리한 뒤 영어 키워드로 압축해야 발표 중 인지 부담이 줄어든다.
+      // 메모와 실제 스크립트를 같은 키워드 루트로 압축해야 발표 중 인지 부담이 줄어든다.
       const generatedCards = await aiCoachAdapter.generateKeywordCards(
         memoKo,
         session.category,
+        scriptText,
       );
       const updatedSession = storage.updateSession(session.id, {
         memoKo,
+        scriptText,
+        scriptAnalysis,
         keywordCards: generatedCards,
       });
 
@@ -108,11 +121,17 @@ export function PrepareScreen() {
     setLoading("breath");
 
     try {
-      // 전체 대본 대신 키워드 루트를 쓰면 발표자가 화면을 읽지 않고 흐름만 따라갈 수 있다.
+      // 스크립트가 있어도 연습 화면에서는 호흡 단위만 보여 읽기 부담을 낮춘다.
       const generatedBreathScript =
-        await aiCoachAdapter.generateBreathScript(memoKo, keywordCards);
+        await aiCoachAdapter.generateBreathScript(
+          memoKo,
+          keywordCards,
+          scriptText,
+        );
       const updatedSession = storage.updateSession(session.id, {
         memoKo,
+        scriptText,
+        scriptAnalysis,
         keywordCards,
         breathScript: generatedBreathScript,
       });
@@ -134,6 +153,8 @@ export function PrepareScreen() {
     // Practice Room 진입 전에는 호흡 위치를 검토만 하고, 실제 진행 제어는 다음 화면에서 맡는다.
     storage.updateSession(session.id, {
       memoKo,
+      scriptText,
+      scriptAnalysis,
       keywordCards,
       breathScript,
       status: "prepared",
@@ -200,10 +221,13 @@ export function PrepareScreen() {
           <div>
             <h2 className="text-2xl font-semibold text-text">생각 정리</h2>
             <p className="mt-2 text-text-secondary">
-              먼저 한국어로 오늘 말하고 싶은 내용을 적어주세요.
+              한국어 메모나 실제로 읽을 영어 스크립트를 적어주세요.
             </p>
           </div>
           <label className="grid gap-2">
+            <span className="text-sm font-medium text-text-secondary">
+              Korean memo
+            </span>
             <textarea
               className="min-h-52 resize-y rounded-lg border border-border bg-surface px-4 py-3 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               maxLength={500}
@@ -215,9 +239,24 @@ export function PrepareScreen() {
               {memoKo.length} / 500
             </span>
           </label>
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-text-secondary">
+              English script
+            </span>
+            <textarea
+              className="min-h-64 resize-y rounded-lg border border-border bg-surface px-4 py-3 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              maxLength={3000}
+              onChange={(event) => setScriptText(event.target.value)}
+              placeholder="실제로 읽고 싶은 영어 발표 스크립트를 붙여넣으세요"
+              value={scriptText}
+            />
+            <span className="text-right font-mono text-sm text-text-secondary">
+              {scriptText.length} / 3000
+            </span>
+          </label>
           <div className="flex justify-end">
             <Button
-              disabled={memoKo.trim().length === 0}
+              disabled={!hasPracticeSource}
               loading={loading === "keywords"}
               onClick={handleGenerateKeywords}
             >
@@ -278,6 +317,8 @@ export function PrepareScreen() {
           </div>
         </GlassCard>
       )}
+
+      {scriptAnalysis && <ScriptInsightPanel analysis={scriptAnalysis} />}
     </main>
   );
 }
