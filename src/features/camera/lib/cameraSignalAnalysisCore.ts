@@ -8,6 +8,13 @@ import type { PracticeSignalSummary } from "@shared/types";
 
 type RegionBox = { x: number; y: number; width: number; height: number };
 type Point3 = { x: number; y: number; z: number };
+export type MouthLandmarkPoint = { x: number; y: number };
+export type MouthShape = {
+  outer: MouthLandmarkPoint[];
+  inner: MouthLandmarkPoint[];
+  opennessScore: number;
+  confidence: number;
+};
 
 export type RunningStats = {
   samples: number;
@@ -24,6 +31,7 @@ export type RunningStats = {
   previousMouthOpen: number | null;
   previousMouthLight: number | null;
   previousNose: Point3 | null;
+  mouthShape: MouthShape | null;
   usedVisionLandmarks: boolean;
   landmarkerFailed: boolean;
 };
@@ -36,6 +44,7 @@ export type CameraSignalSnapshot = Pick<
 > & {
   sampleCount: number; isAnalyzing: boolean;
   usedNativeDetector: boolean;
+  mouthShape: MouthShape | null;
 };
 
 const modelUrl =
@@ -51,6 +60,7 @@ export const emptySnapshot: CameraSignalSnapshot = {
   headStabilityScore: null,
   lookDownRatio: null,
   readingPostureRiskScore: null,
+  mouthShape: null,
   cameraFeedback: "카메라 분석 대기 중입니다.",
   mouthFeedback: "입 움직임 분석 대기 중입니다.",
   postureFeedback: "자세 신호 분석 대기 중입니다.",
@@ -66,6 +76,7 @@ export const createInitialStats = (): RunningStats => ({
   lookDownSamples: 0, lookDownHits: 0,
   headSamples: 0, headMovementSum: 0,
   previousMouthOpen: null, previousMouthLight: null, previousNose: null,
+  mouthShape: null,
   usedVisionLandmarks: false,
   landmarkerFailed: false,
 });
@@ -75,6 +86,24 @@ const clampScore = (value: number): number => Math.max(0, Math.min(100, Math.rou
 const distance = (a: Point3, b: Point3): number => Math.hypot(a.x - b.x, a.y - b.y);
 
 const landmarkAt = (landmarks: NormalizedLandmark[], index: number): NormalizedLandmark | null => landmarks[index] ?? null;
+
+const outerMouthIndices = [
+  61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267, 0, 37,
+  39, 40, 185,
+];
+const innerMouthIndices = [
+  78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308, 415, 310, 311, 312, 13, 82,
+  81, 80, 191,
+];
+
+const toMouthPoints = (
+  landmarks: NormalizedLandmark[],
+  indices: number[],
+): MouthLandmarkPoint[] =>
+  indices
+    .map((index) => landmarkAt(landmarks, index))
+    .filter((point): point is NormalizedLandmark => point !== null)
+    .map((point) => ({ x: point.x, y: point.y }));
 
 const blendScore = (result: FaceLandmarkerResult, names: string[]): number => {
   const categories = result.faceBlendshapes[0]?.categories ?? [];
@@ -147,6 +176,7 @@ export const createSnapshot = (
     headStabilityScore,
     lookDownRatio,
     readingPostureRiskScore,
+    mouthShape: stats.mouthShape,
     cameraFeedback:
       cameraAttentionScore === null
         ? "영상 신호가 아직 충분하지 않습니다."
@@ -242,6 +272,8 @@ export const applyLandmarkSample = (
   if (upperLip && lowerLip && leftMouth && rightMouth) {
     const mouthWidth = Math.max(0.01, distance(leftMouth, rightMouth));
     const mouthOpenRatio = distance(upperLip, lowerLip) / mouthWidth;
+    const outer = toMouthPoints(landmarks, outerMouthIndices);
+    const inner = toMouthPoints(landmarks, innerMouthIndices);
 
     stats.mouthOpenSamples += 1;
     stats.mouthOpenSum += Math.min(1, mouthOpenRatio * 4);
@@ -251,6 +283,18 @@ export const applyLandmarkSample = (
         ? Math.min(1, mouthOpenRatio * 4)
         : Math.min(1, Math.abs(mouthOpenRatio - stats.previousMouthOpen) * 12);
     stats.previousMouthOpen = mouthOpenRatio;
+
+    if (
+      outer.length === outerMouthIndices.length &&
+      inner.length === innerMouthIndices.length
+    ) {
+      stats.mouthShape = {
+        outer,
+        inner,
+        opennessScore: clampScore(mouthOpenRatio * 400),
+        confidence: 100,
+      };
+    }
   }
 
   stats.usedVisionLandmarks = true;
@@ -287,6 +331,7 @@ export const applyFallbackSample = (
 
   stats.attentionSamples += 1;
   if (centerLight > 24) stats.attentionHits += 1;
+  stats.mouthShape = null;
 
   if (stats.previousMouthLight !== null) {
     stats.movementSamples += 1;

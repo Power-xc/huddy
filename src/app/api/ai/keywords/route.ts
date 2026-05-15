@@ -1,6 +1,7 @@
 import type { PracticeSessionCategory } from "@shared/types";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
+import { guardAiRequest } from "../_lib/requestGuard";
 
 type KeywordCardDraft = {
   keyword: string;
@@ -77,6 +78,12 @@ Rules:
 - Reflect the actual content of the memo and script`;
 
 export async function POST(request: Request): Promise<Response> {
+  const guardResponse = guardAiRequest(request);
+
+  if (guardResponse) {
+    return guardResponse;
+  }
+
   const body: unknown = await request.json().catch(() => null);
 
   if (!isRequestBody(body)) {

@@ -3,6 +3,7 @@ export { useCameraSignalAnalysis } from "./lib/useCameraSignalAnalysis";
 export type { UseCameraResult } from "./lib/useCamera";
 export type {
   CameraSignalSnapshot,
+  MouthShape,
   UseCameraSignalAnalysisResult,
 } from "./lib/useCameraSignalAnalysis";
 export type {

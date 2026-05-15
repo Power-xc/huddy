@@ -81,7 +81,7 @@ export function HomePage() {
         <GlassCard className="flex flex-col gap-6 p-6 sm:p-8">
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-primary">HUDdy</p>
-            <h1 className="font-heading text-4xl font-semibold text-text sm:text-5xl">
+            <h1 className="font-heading text-3xl font-semibold text-text sm:text-5xl">
               Your AI speaking navigator on screen.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-text-secondary">

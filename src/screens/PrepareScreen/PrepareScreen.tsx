@@ -197,7 +197,7 @@ export function PrepareScreen() {
       <header className="flex flex-col gap-4">
         <p className="text-sm font-medium text-primary">Prepare</p>
         <div>
-          <h1 className="font-heading text-4xl font-semibold text-text">
+          <h1 className="font-heading text-3xl font-semibold text-text sm:text-4xl">
             {session.title}
           </h1>
           <p className="mt-2 text-text-secondary">
@@ -254,6 +254,10 @@ export function PrepareScreen() {
               {scriptText.length} / 3000
             </span>
           </label>
+          <div className="rounded-lg border border-border bg-surface/60 px-4 py-3 text-sm leading-6 text-text-secondary">
+            카메라 영상과 원본 오디오는 저장하지 않습니다. 마이크 자막은
+            브라우저 음성 인식 결과만 세션 리포트에 남깁니다.
+          </div>
           <div className="flex justify-end">
             <Button
               disabled={!hasPracticeSource}

@@ -109,49 +109,39 @@ export function HUDOverlay({
       </div>
 
       <div
-        className="absolute"
+        className="absolute grid gap-2"
         style={{
           bottom: "var(--hud-safe-bottom)",
           left: "var(--hud-safe-x)",
-        }}
-      >
-        {elapsedSec === undefined ? (
-          <GlassCard className="px-4 py-3">
-            <p className="font-mono text-lg font-semibold text-text">
-              {elapsedLabel}
-            </p>
-          </GlassCard>
-        ) : (
-          <HUDTimer
-            elapsedSec={elapsedSec}
-            targetDurationMin={targetDurationMin}
-          />
-        )}
-      </div>
-
-      <div
-        className="absolute"
-        style={{
-          bottom: "var(--hud-safe-bottom)",
           right: "var(--hud-safe-x)",
         }}
       >
-        <HUDCuePlaceholder
-          cameraAttentionScore={cameraAttentionScore}
-          headStabilityScore={headStabilityScore}
-          lookDownRatio={lookDownRatio}
-          mouthMovementScore={mouthMovementScore}
-          pronunciationScore={pronunciationScore}
-          scriptCoverageScore={scriptCoverageScore}
-          spokenKeywordCount={spokenKeywordCount}
-        />
-      </div>
-
-      <div
-        className="absolute left-1/2 w-[min(560px,calc(100vw-(var(--hud-safe-x)*2)))] -translate-x-1/2"
-        style={{ bottom: "calc(var(--hud-safe-bottom) + 8px)" }}
-      >
-        <HUDSubtitle label={subtitleLabel} />
+        <div className="mx-auto w-[min(560px,100%)]">
+          <HUDSubtitle label={subtitleLabel} />
+        </div>
+        <div className="flex items-end justify-between gap-2">
+          {elapsedSec === undefined ? (
+            <GlassCard className="px-3 py-2 sm:px-4 sm:py-3">
+              <p className="font-mono text-base font-semibold text-text sm:text-lg">
+                {elapsedLabel}
+              </p>
+            </GlassCard>
+          ) : (
+            <HUDTimer
+              elapsedSec={elapsedSec}
+              targetDurationMin={targetDurationMin}
+            />
+          )}
+          <HUDCuePlaceholder
+            cameraAttentionScore={cameraAttentionScore}
+            headStabilityScore={headStabilityScore}
+            lookDownRatio={lookDownRatio}
+            mouthMovementScore={mouthMovementScore}
+            pronunciationScore={pronunciationScore}
+            scriptCoverageScore={scriptCoverageScore}
+            spokenKeywordCount={spokenKeywordCount}
+          />
+        </div>
       </div>
     </div>
   );

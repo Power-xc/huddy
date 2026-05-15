@@ -11,10 +11,12 @@ export function HUDTimer({ elapsedSec, targetDurationMin }: HUDTimerProps) {
     targetDurationMin !== undefined && elapsedSec > targetDurationMin * 60;
 
   return (
-    <GlassCard className="px-4 py-3">
-      <p className="text-xs uppercase text-text-secondary">elapsed</p>
+    <GlassCard className="px-3 py-2 sm:px-4 sm:py-3">
+      <p className="text-[10px] uppercase text-text-secondary sm:text-xs">
+        elapsed
+      </p>
       <p
-        className="font-mono text-lg font-semibold"
+        className="font-mono text-base font-semibold sm:text-lg"
         style={{
           color: hasExceededTarget
             ? "var(--color-warning)"

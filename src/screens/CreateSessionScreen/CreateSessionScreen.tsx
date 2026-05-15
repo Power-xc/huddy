@@ -106,7 +106,7 @@ export function CreateSessionScreen() {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-5 py-8 sm:px-8 lg:py-12">
       <header className="flex flex-col gap-3">
         <p className="text-sm font-medium text-primary">Create Session</p>
-        <h1 className="font-heading text-4xl font-semibold text-text">
+        <h1 className="font-heading text-3xl font-semibold text-text sm:text-4xl">
           새 발표 세션
         </h1>
         <p className="text-text-secondary">
