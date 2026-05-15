@@ -33,12 +33,14 @@ export function HUDCuePlaceholder({
   ];
 
   return (
-    <GlassCard className="min-w-44 px-4 py-3">
-      <p className="text-xs uppercase text-text-muted">live signals</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+    <GlassCard className="max-w-[min(58vw,20rem)] px-3 py-2 sm:min-w-44 sm:px-4 sm:py-3">
+      <p className="text-[10px] uppercase text-text-muted sm:text-xs">
+        live signals
+      </p>
+      <div className="mt-1 flex max-h-16 flex-wrap justify-end gap-1 overflow-hidden sm:mt-2 sm:max-h-none sm:gap-2">
         {cueLabels.map((label) => (
           <span
-            className="rounded-full border border-border px-2 py-1 font-mono text-xs text-text-secondary"
+            className="rounded-full border border-border px-1.5 py-0.5 font-mono text-[10px] text-text-secondary sm:px-2 sm:py-1 sm:text-xs"
             key={label}
           >
             {label}

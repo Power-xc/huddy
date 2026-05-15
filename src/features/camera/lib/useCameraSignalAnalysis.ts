@@ -16,7 +16,10 @@ import type {
   RunningStats,
 } from "./cameraSignalAnalysisCore";
 
-export type { CameraSignalSnapshot } from "./cameraSignalAnalysisCore";
+export type {
+  CameraSignalSnapshot,
+  MouthShape,
+} from "./cameraSignalAnalysisCore";
 
 export type UseCameraSignalAnalysisResult = {
   snapshot: CameraSignalSnapshot;
@@ -77,7 +80,7 @@ export function useCameraSignalAnalysis(
 
     const intervalId = window.setInterval(() => {
       void sampleVideo();
-    }, 500);
+    }, 300);
 
     return () => window.clearInterval(intervalId);
   }, [enabled, sampleVideo]);

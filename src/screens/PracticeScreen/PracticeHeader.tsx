@@ -18,9 +18,9 @@ export function PracticeHeader({
   onToggleSound,
 }: PracticeHeaderProps) {
   return (
-    <header className="absolute left-0 right-0 top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-5 py-4">
-      <div className="flex items-center gap-2 justify-self-start">
-        <p className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-primary">
+    <header className="absolute left-0 right-0 top-0 z-20 flex flex-col gap-2 px-3 py-3 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-4 sm:px-5 sm:py-4">
+      <div className="flex min-w-0 items-center gap-2 justify-self-start overflow-x-auto">
+        <p className="shrink-0 rounded-full border border-border px-3 py-1.5 text-sm font-semibold text-primary sm:px-4 sm:py-2">
           Practice
         </p>
         {isSTTSupported && (
@@ -40,11 +40,11 @@ export function PracticeHeader({
           {isSoundEnabled ? "Sound on" : "Sound off"}
         </Button>
       </div>
-      <h1 className="max-w-lg truncate text-center font-heading text-lg font-semibold text-text">
+      <h1 className="order-first max-w-full truncate pr-32 text-left font-heading text-base font-semibold text-text sm:order-none sm:max-w-lg sm:pr-0 sm:text-center sm:text-lg">
         {title}
       </h1>
-      <div className="justify-self-end">
-        <Button onClick={onComplete} variant="secondary">
+      <div className="absolute right-3 top-3 justify-self-end sm:static">
+        <Button onClick={onComplete} size="sm" variant="secondary">
           완료하고 리포트
         </Button>
       </div>

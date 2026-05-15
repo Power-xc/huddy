@@ -284,8 +284,13 @@ export function PracticeScreen() {
         title={session.title}
       />
 
-      <section className="absolute inset-x-5 bottom-5 top-20 overflow-hidden rounded-2xl border border-border bg-surface">
-        <CameraPreview camera={camera} className="h-full w-full" />
+      <section className="absolute inset-x-3 bottom-3 top-28 overflow-hidden rounded-xl border border-border bg-surface sm:inset-x-5 sm:bottom-5 sm:top-20 sm:rounded-2xl">
+        <CameraPreview
+          camera={camera}
+          className="h-full w-full"
+          mouthMovementScore={cameraSignals.snapshot.mouthMovementScore}
+          mouthShape={cameraSignals.snapshot.mouthShape}
+        />
       </section>
 
       <HUDOverlay

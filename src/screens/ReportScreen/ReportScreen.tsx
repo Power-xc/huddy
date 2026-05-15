@@ -189,7 +189,7 @@ export function ReportScreen() {
       <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium text-primary">Report</p>
-          <h1 className="mt-2 font-heading text-4xl font-semibold text-text">
+          <h1 className="mt-2 font-heading text-3xl font-semibold text-text sm:text-4xl">
             발표 리포트
           </h1>
           <p className="mt-3 text-text-secondary">{practiceSession.title}</p>

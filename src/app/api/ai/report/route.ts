@@ -1,6 +1,7 @@
 import type { PresentationMode, SessionMetric } from "@shared/types";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
+import { guardAiRequest } from "../_lib/requestGuard";
 
 type ReportRequestBody = {
   title: string;
@@ -231,6 +232,12 @@ Return ONLY this JSON (no markdown):
 }`;
 
 export async function POST(request: Request): Promise<Response> {
+  const guardResponse = guardAiRequest(request);
+
+  if (guardResponse) {
+    return guardResponse;
+  }
+
   const body: unknown = await request.json().catch(() => null);
 
   if (!isRequestBody(body)) {
