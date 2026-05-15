@@ -24,6 +24,8 @@ export type HUDOverlayProps = {
   headStabilityScore?: number | null;
   lookDownRatio?: number | null;
   spokenKeywordCount?: number;
+  scriptCoverageScore?: number | null;
+  pronunciationScore?: number | null;
   hudMode?: "keyword" | "breath";
   breathSegments?: BreathSegment[];
   currentBreathCueIndex?: number;
@@ -49,6 +51,8 @@ export function HUDOverlay({
   headStabilityScore,
   lookDownRatio,
   spokenKeywordCount,
+  scriptCoverageScore,
+  pronunciationScore,
   hudMode,
   breathSegments,
   currentBreathCueIndex = 0,
@@ -137,6 +141,8 @@ export function HUDOverlay({
           headStabilityScore={headStabilityScore}
           lookDownRatio={lookDownRatio}
           mouthMovementScore={mouthMovementScore}
+          pronunciationScore={pronunciationScore}
+          scriptCoverageScore={scriptCoverageScore}
           spokenKeywordCount={spokenKeywordCount}
         />
       </div>

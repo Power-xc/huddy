@@ -26,12 +26,35 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
   const timeline = signals.transcriptTimeline ?? [];
   const autoDetectedKeywords = signals.autoDetectedKeywords ?? [];
   const manuallyAdvancedKeywords = signals.manuallyAdvancedKeywords ?? [];
+  const scriptAssessment = signals.scriptAssessment;
 
   return (
     <GlassCard className="grid gap-5 p-6">
       <div>
         <p className="text-sm font-medium text-primary">Practice signals</p>
         <h2 className="mt-2 text-xl font-semibold text-text">실전 신호 분석</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <p className="text-sm text-text-secondary">스크립트 매칭</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-primary">
+            {formatOptionalScore(scriptAssessment?.coverageScore)}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {scriptAssessment?.feedbackKo ?? "스크립트 낭독 기록이 없습니다."}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">발음 인식</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-primary">
+            {formatOptionalScore(scriptAssessment?.pronunciationScore)}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {(scriptAssessment?.unclearWords.length ?? 0) > 0
+              ? scriptAssessment?.unclearWords.join(" / ")
+              : "다시 확인할 발음 단어가 없습니다."}
+          </p>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div>

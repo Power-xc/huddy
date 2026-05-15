@@ -18,7 +18,7 @@ const formatKeywordProgress = (session: PracticeSession): string => {
   ].join("\n");
 };
 
-const formatMotionSignals = (session: PracticeSession): string => {
+const formatSpeakingSignals = (session: PracticeSession): string => {
   const signals = session.practiceSignals;
 
   if (!signals) {
@@ -33,6 +33,28 @@ const formatMotionSignals = (session: PracticeSession): string => {
     `아래보기 비율: ${signals.lookDownRatio ?? "분석 제한"}%`,
     `읽는 자세 리스크: ${signals.readingPostureRiskScore ?? "분석 제한"}%`,
     `pause 리듬: ${signals.pauseRhythmScore ?? "분석 제한"}%`,
+  ].join("\n");
+};
+
+const formatScriptSignals = (session: PracticeSession): string => {
+  const analysis = session.scriptAnalysis;
+  const assessment = session.practiceSignals?.scriptAssessment;
+
+  if (!analysis && !assessment) {
+    return "기록 없음";
+  }
+
+  return [
+    `중요 키워드: ${
+      analysis?.keywords.map((keyword) => keyword.term).join(" / ") || "없음"
+    }`,
+    `발음 단어: ${
+      analysis?.vocabulary.map((item) => item.word).join(" / ") || "없음"
+    }`,
+    `읽기 쉬움: ${analysis?.readability.score ?? "분석 제한"}%`,
+    `스크립트 매칭: ${assessment?.coverageScore ?? "분석 제한"}%`,
+    `발음 인식: ${assessment?.pronunciationScore ?? "분석 제한"}%`,
+    `다시 읽을 단어: ${assessment?.unclearWords.join(" / ") || "없음"}`,
   ].join("\n");
 };
 
@@ -83,8 +105,11 @@ export function buildReportMarkdown(session: PracticeSession): string {
     "## 키워드 진행",
     formatKeywordProgress(session),
     "",
-    "## 발표 동작 신호",
-    formatMotionSignals(session),
+    "## 발표 신호",
+    formatSpeakingSignals(session),
+    "",
+    "## 스크립트 분석",
+    formatScriptSignals(session),
     "",
     "## 발표 리플레이",
     replay || "기록 없음",

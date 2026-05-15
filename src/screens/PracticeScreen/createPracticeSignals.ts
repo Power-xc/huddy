@@ -1,5 +1,6 @@
 import type { CameraSignalSnapshot } from "@features/camera";
 import {
+  assessScriptReadAloud,
   extractSpokenKeywords,
   getRouteKeywordProgress,
 } from "@features/speech";
@@ -13,6 +14,7 @@ import type {
 
 type CreatePracticeSignalsInput = {
   transcript: string;
+  scriptText: string;
   keywordCards: KeywordCard[];
   transcriptTimeline: TranscriptTimelineItem[];
   keywordProgress: KeywordRouteProgressItem[];
@@ -59,6 +61,7 @@ const getPauseRhythm = (
 
 export function createPracticeSignals({
   transcript,
+  scriptText,
   keywordCards,
   transcriptTimeline,
   keywordProgress,
@@ -72,6 +75,7 @@ export function createPracticeSignals({
   const { matchedRouteKeywords, missedRouteKeywords } =
     getRouteKeywordProgress(cleanTranscript, keywordCards);
   const pauseRhythm = getPauseRhythm(transcriptTimeline);
+  const scriptAssessment = assessScriptReadAloud(scriptText, cleanTranscript);
 
   return {
     spokenKeywords,
@@ -92,6 +96,7 @@ export function createPracticeSignals({
     lookDownRatio: cameraSnapshot.lookDownRatio,
     readingPostureRiskScore: cameraSnapshot.readingPostureRiskScore,
     pauseRhythmScore: pauseRhythm.pauseRhythmScore,
+    scriptAssessment,
     cameraFeedback: cameraSnapshot.cameraFeedback,
     mouthFeedback: cameraSnapshot.mouthFeedback,
     postureFeedback: cameraSnapshot.postureFeedback,

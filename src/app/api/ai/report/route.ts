@@ -9,6 +9,15 @@ type ReportRequestBody = {
   actualDurationSec: number;
   keywordsUsedCount: number;
   totalKeywords: number;
+  scriptText: string | null;
+  scriptKeywords: string[];
+  scriptVocabulary: string[];
+  scriptReadabilityScore: number | null;
+  scriptCoverageScore: number | null;
+  scriptPronunciationScore: number | null;
+  scriptMissedWords: string[];
+  scriptProblemWords: string[];
+  scriptFeedback: string | null;
   transcript: string | null;
   keywordRoute: string;
   spokenKeywords: string[];
@@ -86,10 +95,32 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
   typeof value.title === "string" &&
   typeof value.category === "string" &&
   typeof value.targetDurationMin === "number" &&
-  typeof value.actualDurationSec === "number" &&
-  typeof value.keywordsUsedCount === "number" &&
-  typeof value.totalKeywords === "number" &&
-  (typeof value.transcript === "string" || value.transcript === null) &&
+    typeof value.actualDurationSec === "number" &&
+    typeof value.keywordsUsedCount === "number" &&
+    typeof value.totalKeywords === "number" &&
+    ((typeof value.scriptText === "string" && value.scriptText.length <= 5000) ||
+      value.scriptText === null) &&
+    Array.isArray(value.scriptKeywords) &&
+    value.scriptKeywords.length <= 12 &&
+    value.scriptKeywords.every((item) => typeof item === "string") &&
+    Array.isArray(value.scriptVocabulary) &&
+    value.scriptVocabulary.length <= 12 &&
+    value.scriptVocabulary.every((item) => typeof item === "string") &&
+    (typeof value.scriptReadabilityScore === "number" ||
+      value.scriptReadabilityScore === null) &&
+    (typeof value.scriptCoverageScore === "number" ||
+      value.scriptCoverageScore === null) &&
+    (typeof value.scriptPronunciationScore === "number" ||
+      value.scriptPronunciationScore === null) &&
+    Array.isArray(value.scriptMissedWords) &&
+    value.scriptMissedWords.length <= 20 &&
+    value.scriptMissedWords.every((item) => typeof item === "string") &&
+    Array.isArray(value.scriptProblemWords) &&
+    value.scriptProblemWords.length <= 12 &&
+    value.scriptProblemWords.every((item) => typeof item === "string") &&
+    (typeof value.scriptFeedback === "string" ||
+      value.scriptFeedback === null) &&
+    (typeof value.transcript === "string" || value.transcript === null) &&
   typeof value.keywordRoute === "string" &&
   Array.isArray(value.spokenKeywords) &&
   value.spokenKeywords.every((item) => typeof item === "string") &&
@@ -140,6 +171,14 @@ Target: ${body.targetDurationMin} min | Actual: ${
 } min
 Keywords used: ${body.keywordsUsedCount}/${body.totalKeywords}
 Keyword route: ${body.keywordRoute}
+Script keywords: ${body.scriptKeywords.join(" / ") || "none"}
+Script pronunciation targets: ${body.scriptVocabulary.join(" / ") || "none"}
+Script readability score: ${body.scriptReadabilityScore ?? "unavailable"}
+Script read-aloud match: ${body.scriptCoverageScore ?? "unavailable"}
+Script pronunciation recognition: ${body.scriptPronunciationScore ?? "unavailable"}
+Script missed words: ${body.scriptMissedWords.join(" / ") || "none"}
+Script unclear words: ${body.scriptProblemWords.join(" / ") || "none"}
+Script assessment feedback: ${body.scriptFeedback ?? "none"}
 Detected route keywords: ${body.matchedRouteKeywords.join(" / ") || "none"}
 Missed route keywords: ${body.missedRouteKeywords.join(" / ") || "none"}
 Auto-detected route keywords: ${body.autoDetectedKeywords.join(" / ") || "none"}
@@ -169,8 +208,14 @@ ${
     ? `\nTranscript:\n${body.transcript.slice(0, 3000)}`
     : "\n(No transcript available)"
 }
+${
+  body.scriptText
+    ? `\nOriginal script:\n${body.scriptText.slice(0, 3000)}`
+    : "\n(No original script available)"
+}
 
 Provide honest, specific coaching feedback in Korean where noted.
+When script read-aloud metrics exist, use them to score pronunciation and choose problemWords.
 
 Return ONLY this JSON (no markdown):
 {

@@ -9,13 +9,29 @@ type BreathSegmentDraft = {
 type BreathScriptRequestBody = {
   memoKo: string;
   keywords: string[];
+  scriptText?: string;
 };
 
-const isRequestBody = (value: unknown): value is BreathScriptRequestBody =>
-  isRecord(value) &&
-  typeof value.memoKo === "string" &&
-  Array.isArray(value.keywords) &&
-  value.keywords.every((keyword) => typeof keyword === "string");
+const isRequestBody = (value: unknown): value is BreathScriptRequestBody => {
+  if (!isRecord(value) || typeof value.memoKo !== "string") {
+    return false;
+  }
+
+  const scriptText =
+    typeof value.scriptText === "string" ? value.scriptText : "";
+
+  return (
+    value.memoKo.length <= 1000 &&
+    scriptText.length <= 4000 &&
+    Array.isArray(value.keywords) &&
+    value.keywords.length > 0 &&
+    value.keywords.length <= 12 &&
+    value.keywords.every(
+      (keyword) => typeof keyword === "string" && keyword.length <= 80,
+    ) &&
+    (value.scriptText === undefined || typeof value.scriptText === "string")
+  );
+};
 
 const isBreathSegmentDraft = (
   value: unknown,
@@ -33,9 +49,14 @@ const isBreathSegmentDraftArray = (
   value.length <= 12 &&
   value.every(isBreathSegmentDraft);
 
-const buildPrompt = ({ memoKo, keywords }: BreathScriptRequestBody): string => `
+const buildPrompt = ({
+  memoKo,
+  keywords,
+  scriptText = "",
+}: BreathScriptRequestBody): string => `
 Korean memo: ${memoKo}
 Keyword route: ${keywords.join(" → ")}
+User's English script: ${scriptText || "none"}
 
 Create a Breath Script: short English phrases (5-12 words each) that follow
 the keyword route. Each phrase = one natural breath unit.
@@ -52,6 +73,7 @@ Rules:
 - isBreathPoint: true for segments where the speaker should pause briefly
   (after important statements, before transitions) — roughly every 2-3 segments
 - First segment isBreathPoint: false always
+- If the user script exists, preserve its wording where possible
 - Reflect the actual content of the memo and follow the keyword order`;
 
 export async function POST(request: Request): Promise<Response> {

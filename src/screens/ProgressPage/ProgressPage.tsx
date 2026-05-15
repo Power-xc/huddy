@@ -69,6 +69,18 @@ export function ProgressPage() {
         ),
     [sessions],
   );
+  const handleDeleteCompletedSession = (session: PracticeSession) => {
+    const shouldDelete = window.confirm(
+      `"${session.title}" route 기록을 삭제할까요? 저장된 리포트도 함께 삭제됩니다.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    storage.deleteSession(session.id);
+    setSessions(storage.getSessions());
+  };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-5 py-8 sm:px-8 lg:py-12">
@@ -112,17 +124,28 @@ export function ProgressPage() {
         {completedSessions.length > 0 ? (
           <div className="grid gap-3">
             {completedSessions.map((session) => (
-              <button
-                className="grid gap-1 rounded-lg border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              <div
+                className="grid gap-3 rounded-lg border border-border bg-surface px-4 py-3 transition-colors hover:border-primary sm:grid-cols-[1fr_auto] sm:items-center"
                 key={session.id}
-                onClick={() => router.push(`/session/${session.id}/report`)}
-                type="button"
               >
-                <span className="font-medium text-text">{session.title}</span>
-                <span className="text-sm text-text-secondary">
-                  Route completed · Week {session.weekNumber}
-                </span>
-              </button>
+                <button
+                  className="grid gap-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  onClick={() => router.push(`/session/${session.id}/report`)}
+                  type="button"
+                >
+                  <span className="font-medium text-text">{session.title}</span>
+                  <span className="text-sm text-text-secondary">
+                    Route completed · Week {session.weekNumber}
+                  </span>
+                </button>
+                <Button
+                  onClick={() => handleDeleteCompletedSession(session)}
+                  size="sm"
+                  variant="ghost"
+                >
+                  삭제
+                </Button>
+              </div>
             ))}
           </div>
         ) : (

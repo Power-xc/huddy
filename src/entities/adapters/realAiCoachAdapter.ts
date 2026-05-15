@@ -110,10 +110,11 @@ export class RealAiCoachAdapter implements AICoachAdapter {
   async generateKeywordCards(
     memoKo: string,
     category: PracticeSessionCategory,
+    scriptText = "",
   ): Promise<KeywordCard[]> {
     const data = await postJson(
       "/api/ai/keywords",
-      { memoKo, category },
+      { memoKo, category, scriptText },
       isKeywordResponse,
       "keyword generation failed",
     );
@@ -130,10 +131,11 @@ export class RealAiCoachAdapter implements AICoachAdapter {
   async generateBreathScript(
     memoKo: string,
     keywordCards: KeywordCard[],
+    scriptText = "",
   ): Promise<BreathScript> {
     const data = await postJson(
       "/api/ai/breath-script",
-      { memoKo, keywords: keywordCards.map((card) => card.keyword) },
+      { memoKo, keywords: keywordCards.map((card) => card.keyword), scriptText },
       isBreathScriptResponse,
       "breath script generation failed",
     );
@@ -163,6 +165,23 @@ export class RealAiCoachAdapter implements AICoachAdapter {
         keywordsUsedCount: session.keywordCards.filter((card) => card.isUsed)
           .length,
         totalKeywords: session.keywordCards.length,
+        scriptText: session.scriptText || null,
+        scriptKeywords:
+          session.scriptAnalysis?.keywords.map((keyword) => keyword.term) ?? [],
+        scriptVocabulary:
+          session.scriptAnalysis?.vocabulary.map((item) => item.word) ?? [],
+        scriptReadabilityScore:
+          session.scriptAnalysis?.readability.score ?? null,
+        scriptCoverageScore:
+          session.practiceSignals?.scriptAssessment?.coverageScore ?? null,
+        scriptPronunciationScore:
+          session.practiceSignals?.scriptAssessment?.pronunciationScore ?? null,
+        scriptMissedWords:
+          session.practiceSignals?.scriptAssessment?.missedWords ?? [],
+        scriptProblemWords:
+          session.practiceSignals?.scriptAssessment?.unclearWords ?? [],
+        scriptFeedback:
+          session.practiceSignals?.scriptAssessment?.feedbackKo ?? null,
         transcript: session.transcript ?? null,
         keywordRoute: session.keywordCards
           .map((card) => card.keyword)
