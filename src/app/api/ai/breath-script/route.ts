@@ -1,3 +1,7 @@
+import {
+  memoKoMaxLength,
+  scriptTextMaxLength,
+} from "@shared/config/practiceLimits";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
 import { guardAiRequest } from "../_lib/requestGuard";
@@ -22,8 +26,8 @@ const isRequestBody = (value: unknown): value is BreathScriptRequestBody => {
     typeof value.scriptText === "string" ? value.scriptText : "";
 
   return (
-    value.memoKo.length <= 1000 &&
-    scriptText.length <= 4000 &&
+    value.memoKo.length <= memoKoMaxLength &&
+    scriptText.length <= scriptTextMaxLength &&
     Array.isArray(value.keywords) &&
     value.keywords.length > 0 &&
     value.keywords.length <= 12 &&

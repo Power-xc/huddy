@@ -1,3 +1,7 @@
+import {
+  reportTranscriptMaxLength,
+  scriptTextMaxLength,
+} from "@shared/config/practiceLimits";
 import type { PresentationMode, SessionMetric } from "@shared/types";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
@@ -99,7 +103,8 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
     typeof value.actualDurationSec === "number" &&
     typeof value.keywordsUsedCount === "number" &&
     typeof value.totalKeywords === "number" &&
-    ((typeof value.scriptText === "string" && value.scriptText.length <= 5000) ||
+    ((typeof value.scriptText === "string" &&
+      value.scriptText.length <= scriptTextMaxLength) ||
       value.scriptText === null) &&
     Array.isArray(value.scriptKeywords) &&
     value.scriptKeywords.length <= 12 &&
@@ -121,7 +126,9 @@ const isRequestBody = (value: unknown): value is ReportRequestBody =>
     value.scriptProblemWords.every((item) => typeof item === "string") &&
     (typeof value.scriptFeedback === "string" ||
       value.scriptFeedback === null) &&
-    (typeof value.transcript === "string" || value.transcript === null) &&
+    ((typeof value.transcript === "string" &&
+      value.transcript.length <= reportTranscriptMaxLength) ||
+      value.transcript === null) &&
   typeof value.keywordRoute === "string" &&
   Array.isArray(value.spokenKeywords) &&
   value.spokenKeywords.every((item) => typeof item === "string") &&
@@ -206,12 +213,12 @@ ${
 }
 ${
   body.transcript
-    ? `\nTranscript:\n${body.transcript.slice(0, 3000)}`
+    ? `\nTranscript:\n${body.transcript.slice(0, reportTranscriptMaxLength)}`
     : "\n(No transcript available)"
 }
 ${
   body.scriptText
-    ? `\nOriginal script:\n${body.scriptText.slice(0, 3000)}`
+    ? `\nOriginal script:\n${body.scriptText.slice(0, scriptTextMaxLength)}`
     : "\n(No original script available)"
 }
 
