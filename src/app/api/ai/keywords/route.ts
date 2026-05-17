@@ -1,3 +1,7 @@
+import {
+  memoKoMaxLength,
+  scriptTextMaxLength,
+} from "@shared/config/practiceLimits";
 import type { PracticeSessionCategory } from "@shared/types";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
@@ -34,8 +38,8 @@ const isRequestBody = (value: unknown): value is KeywordRequestBody => {
     typeof value.scriptText === "string" ? value.scriptText : "";
 
   return (
-    value.memoKo.length <= 1000 &&
-    scriptText.length <= 4000 &&
+    value.memoKo.length <= memoKoMaxLength &&
+    scriptText.length <= scriptTextMaxLength &&
     (value.memoKo.trim().length > 0 || scriptText.trim().length > 0) &&
     isCategory(value.category) &&
     (value.scriptText === undefined || typeof value.scriptText === "string")

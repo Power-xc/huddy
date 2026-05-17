@@ -4,6 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { aiCoachAdapter } from "@entities/adapters";
 import { analyzePracticeScript } from "@features/speech";
+import {
+  memoKoMaxLength,
+  scriptTextMaxLength,
+} from "@shared/config/practiceLimits";
 import type { BreathScript, KeywordCard, PracticeSession } from "@shared/types";
 import { storage } from "@shared/lib/storage";
 import { Button, GlassCard } from "@shared/ui";
@@ -230,13 +234,13 @@ export function PrepareScreen() {
             </span>
             <textarea
               className="min-h-52 resize-y rounded-lg border border-border bg-surface px-4 py-3 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              maxLength={500}
+              maxLength={memoKoMaxLength}
               onChange={(event) => setMemoKo(event.target.value)}
               placeholder="오늘 발표할 내용을 한국어로 자유롭게 적어주세요"
               value={memoKo}
             />
             <span className="text-right font-mono text-sm text-text-secondary">
-              {memoKo.length} / 500
+              {memoKo.length} / {memoKoMaxLength}
             </span>
           </label>
           <label className="grid gap-2">
@@ -245,13 +249,13 @@ export function PrepareScreen() {
             </span>
             <textarea
               className="min-h-64 resize-y rounded-lg border border-border bg-surface px-4 py-3 text-text outline-none transition-colors placeholder:text-text-muted focus:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              maxLength={3000}
+              maxLength={scriptTextMaxLength}
               onChange={(event) => setScriptText(event.target.value)}
               placeholder="실제로 읽고 싶은 영어 발표 스크립트를 붙여넣으세요"
               value={scriptText}
             />
             <span className="text-right font-mono text-sm text-text-secondary">
-              {scriptText.length} / 3000
+              {scriptText.length} / {scriptTextMaxLength}
             </span>
           </label>
           <div className="rounded-lg border border-border bg-surface/60 px-4 py-3 text-sm leading-6 text-text-secondary">

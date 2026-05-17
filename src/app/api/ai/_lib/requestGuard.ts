@@ -1,3 +1,4 @@
+import { aiRequestMaxBodyBytes } from "@shared/config/practiceLimits";
 import { jsonError } from "./json";
 
 type RateBucket = {
@@ -5,7 +6,6 @@ type RateBucket = {
   resetAt: number;
 };
 
-const maxBodyBytes = 8_192;
 const windowMs = 60_000;
 const fallbackLimit = 24;
 const buckets = new Map<string, RateBucket>();
@@ -89,7 +89,7 @@ const checkRateLimit = (request: Request): Response | null => {
 export const guardAiRequest = (request: Request): Response | null => {
   const contentLength = Number(request.headers.get("content-length") ?? "0");
 
-  if (contentLength > maxBodyBytes) {
+  if (contentLength > aiRequestMaxBodyBytes) {
     return jsonError("Request body too large", 413);
   }
 
