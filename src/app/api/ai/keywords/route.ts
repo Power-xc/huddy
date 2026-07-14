@@ -3,6 +3,7 @@ import {
   scriptTextMaxLength,
 } from "@shared/config/practiceLimits";
 import type { PracticeSessionCategory } from "@shared/types";
+import { getKeywordCardCount } from "@shared/lib/getKeywordCardCount";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
 import { guardAiRequest } from "../_lib/requestGuard";
@@ -16,6 +17,7 @@ type KeywordRequestBody = {
   memoKo: string;
   category: PracticeSessionCategory;
   scriptText?: string;
+  targetDurationMin?: number;
 };
 
 const categories: PracticeSessionCategory[] = [
@@ -36,13 +38,20 @@ const isRequestBody = (value: unknown): value is KeywordRequestBody => {
 
   const scriptText =
     typeof value.scriptText === "string" ? value.scriptText : "";
+  const targetDurationMin =
+    typeof value.targetDurationMin === "number"
+      ? value.targetDurationMin
+      : 3;
 
   return (
     value.memoKo.length <= memoKoMaxLength &&
     scriptText.length <= scriptTextMaxLength &&
     (value.memoKo.trim().length > 0 || scriptText.trim().length > 0) &&
     isCategory(value.category) &&
-    (value.scriptText === undefined || typeof value.scriptText === "string")
+    (value.scriptText === undefined || typeof value.scriptText === "string") &&
+    Number.isInteger(targetDurationMin) &&
+    targetDurationMin >= 1 &&
+    targetDurationMin <= 120
   );
 };
 
@@ -53,19 +62,29 @@ const isKeywordDraft = (value: unknown): value is KeywordCardDraft =>
   typeof value.hintKo === "string" &&
   value.hintKo.trim().length > 0;
 
-const isKeywordDraftArray = (value: unknown): value is KeywordCardDraft[] =>
-  Array.isArray(value) && value.length === 6 && value.every(isKeywordDraft);
+const isKeywordDraftArray = (
+  value: unknown,
+  expectedCount: number,
+): value is KeywordCardDraft[] =>
+  Array.isArray(value) &&
+  value.length === expectedCount &&
+  value.every(isKeywordDraft);
 
 const buildPrompt = ({
   memoKo,
   category,
   scriptText = "",
-}: KeywordRequestBody): string => `
+  targetDurationMin = 3,
+}: KeywordRequestBody): string => {
+  const keywordCount = getKeywordCardCount(scriptText, targetDurationMin);
+
+  return `
 Korean memo: ${memoKo}
 User's English script: ${scriptText || "none"}
 Category: ${category}
+Target duration: ${targetDurationMin} minutes
 
-Generate exactly 6 English keyword cards for a ${category} presentation based
+Generate exactly ${keywordCount} English keyword cards for a ${category} presentation based
 on the memo and the user's actual English script.
 
 Return ONLY this JSON array (no markdown, no explanation):
@@ -79,7 +98,10 @@ Rules:
 - hintKo: Korean description under 20 chars of what to say at this point
 - Cover opening → body → closing arc
 - Prefer important terms that appear in the actual script when script exists
+- Keep cards in the order their ideas appear in the script
+- Avoid duplicate or near-duplicate keywords
 - Reflect the actual content of the memo and script`;
+};
 
 export async function POST(request: Request): Promise<Response> {
   const guardResponse = guardAiRequest(request);
@@ -95,16 +117,20 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    const keywordCount = getKeywordCardCount(
+      body.scriptText ?? "",
+      body.targetDurationMin ?? 3,
+    );
     const text = await createClaudeJsonText({
       model: "claude-haiku-4-5-20251001",
-      maxTokens: 900,
+      maxTokens: 2400,
       system:
         "You are an English presentation coach. Return JSON only. No explanation.",
       prompt: buildPrompt(body),
     });
     const parsedResponse = parseJsonText(text);
 
-    if (!isKeywordDraftArray(parsedResponse)) {
+    if (!isKeywordDraftArray(parsedResponse, keywordCount)) {
       return jsonError("Invalid AI response", 500);
     }
 

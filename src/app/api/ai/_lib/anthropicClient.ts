@@ -39,6 +39,11 @@ export async function createClaudeJsonText({
   const textBlock = message.content.find(
     (block): block is TextBlock => block.type === "text",
   );
+  const text = textBlock?.text.trim() ?? "";
 
-  return textBlock?.text.trim() ?? "";
+  if (!text) {
+    throw new Error("Received an empty response from Claude");
+  }
+
+  return text;
 }

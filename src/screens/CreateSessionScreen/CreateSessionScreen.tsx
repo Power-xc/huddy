@@ -43,7 +43,9 @@ const focusOptions: Array<Option<FocusArea>> = [
   { value: "eye-contact", label: "eye-contact" },
 ];
 
-const durationOptions: TargetDurationMin[] = [1, 3, 5, 10];
+const durationOptions: TargetDurationMin[] = [1, 3, 5, 10, 15, 20, 30];
+const minDurationMin = 1;
+const maxDurationMin = 120;
 
 const joinClassNames = (
   ...classNames: Array<string | false | null | undefined>
@@ -65,7 +67,11 @@ export function CreateSessionScreen() {
   const [focusAreas, setFocusAreas] = useState<FocusArea[]>(["flow"]);
   const [targetDurationMin, setTargetDurationMin] =
     useState<TargetDurationMin>(3);
-  const isSubmitDisabled = title.trim().length === 0;
+  const isDurationValid =
+    Number.isInteger(targetDurationMin) &&
+    targetDurationMin >= minDurationMin &&
+    targetDurationMin <= maxDurationMin;
+  const isSubmitDisabled = title.trim().length === 0 || !isDurationValid;
 
   const toggleFocusArea = (focusArea: FocusArea) => {
     setFocusAreas((currentFocusAreas) =>
@@ -188,7 +194,7 @@ export function CreateSessionScreen() {
 
           <div>
             <h2 className="text-xl font-semibold text-text">Target duration</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
               {durationOptions.map((durationMin) => (
                 <button
                   className={optionClassName(
@@ -205,6 +211,30 @@ export function CreateSessionScreen() {
                 </button>
               ))}
             </div>
+            <label className="mt-4 grid max-w-xs gap-2">
+              <span className="text-sm font-medium text-text-secondary">
+                직접 입력 · 최대 {maxDurationMin}분
+              </span>
+              <div className="flex items-center gap-2">
+                <input
+                  className="min-h-11 w-28 rounded-lg border border-border bg-surface px-4 font-mono text-text outline-none transition-colors focus:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  max={maxDurationMin}
+                  min={minDurationMin}
+                  onChange={(event) =>
+                    setTargetDurationMin(Number(event.target.value))
+                  }
+                  step={1}
+                  type="number"
+                  value={targetDurationMin}
+                />
+                <span className="text-sm text-text-secondary">분</span>
+              </div>
+              {!isDurationValid && (
+                <span className="text-sm text-red-300" role="alert">
+                  1~{maxDurationMin} 사이의 정수로 입력해주세요.
+                </span>
+              )}
+            </label>
           </div>
         </GlassCard>
 
