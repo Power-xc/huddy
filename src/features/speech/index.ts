@@ -1,5 +1,10 @@
 export { useSpeechRecognition } from "./lib/useSpeechRecognition";
-export { detectKeyword } from "./lib/detectKeyword";
+export {
+  detectKeyword,
+  detectPhraseCompletion,
+  getPhraseRecognitionProgress,
+} from "./lib/detectKeyword";
+export type { PhraseRecognitionProgress } from "./lib/detectKeyword";
 export {
   extractSpokenKeywords,
   getRouteKeywordProgress,

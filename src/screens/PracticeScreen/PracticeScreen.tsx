@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCamera, useCameraSignalAnalysis } from "@features/camera";
 import { useHUDStore, useHudSoundCue, usePracticeTimer } from "@features/hud";
 import {
@@ -34,6 +34,8 @@ export function PracticeScreen() {
     string | null
   >(null);
   const keywordFlashTimeoutRef = useRef<number | null>(null);
+  const breathAdvanceTimeoutRef = useRef<number | null>(null);
+  const advanceKeywordManuallyRef = useRef<() => void>(() => undefined);
   const playedTimerCuesRef = useRef<Set<number>>(new Set());
   const playedListeningCueRef = useRef(false);
   const hudState = useHUDStore((state) => state.hudState);
@@ -68,6 +70,8 @@ export function PracticeScreen() {
     finalTranscript,
     isListening,
     isSupported: isSTTSupported,
+    recognitionConfidence,
+    recognitionError,
     startListening,
     stopListening,
   } = useSpeechRecognition();
@@ -88,20 +92,25 @@ export function PracticeScreen() {
   ).length, [detectionTranscript, keywordCards]);
   const transcriptTimeline = useTranscriptTimeline({ elapsedSec, finalTranscript, keywordCards });
   const liveScriptAssessment = useMemo(
-    () => assessScriptReadAloud(session?.scriptText ?? "", fullLiveTranscript),
-    [fullLiveTranscript, session?.scriptText],
+    () =>
+      assessScriptReadAloud(
+        session?.scriptText ?? "",
+        fullLiveTranscript,
+        recognitionConfidence,
+      ),
+    [fullLiveTranscript, recognitionConfidence, session?.scriptText],
   );
   const keywordProgress = useKeywordProgressTracker({ currentCard, elapsedSec, onNextKeyword: nextKeyword });
-  const detectionKeyword =
-    hudMode === "keyword" && !allKeywordsCompleted
-      ? (currentCard?.keyword ?? null)
-      : null;
+  const detectionKeyword = !allKeywordsCompleted
+    ? (currentCard?.keyword ?? null)
+    : null;
   const isCurrentCardDetecting =
     isKeywordDetecting && keywordDetectingCardId === currentCard?.id;
 
   useKeywordDetection({
     transcript: detectionTranscript,
     keyword: detectionKeyword,
+    detectionKey: currentCard?.id ?? null,
     onDetected: () => {
       if (keywordFlashTimeoutRef.current !== null) {
         window.clearTimeout(keywordFlashTimeoutRef.current);
@@ -124,15 +133,69 @@ export function PracticeScreen() {
     hudMode === "breath" && !allBreathCuesCompleted
       ? (breathSegments[currentBreathCueIndex] ?? null)
       : null;
+  const advanceBreathCueManually = useCallback(() => {
+    if (breathAdvanceTimeoutRef.current !== null) {
+      window.clearTimeout(breathAdvanceTimeoutRef.current);
+      breathAdvanceTimeoutRef.current = null;
+    }
+
+    nextBreathCue(breathSegments.length);
+  }, [breathSegments.length, nextBreathCue]);
+
+  useEffect(() => {
+    advanceKeywordManuallyRef.current = keywordProgress.advanceManually;
+  }, [keywordProgress.advanceManually]);
 
   useKeywordDetection({
     transcript: detectionTranscript,
     keyword: currentBreathSegment?.text ?? null,
+    detectionKey: currentBreathSegment?.id ?? null,
+    matchMode: "phrase",
     onDetected: () => {
+      if (breathAdvanceTimeoutRef.current !== null) {
+        return;
+      }
+
       playCue("breath");
-      nextBreathCue(breathSegments.length);
+      breathAdvanceTimeoutRef.current = window.setTimeout(() => {
+        nextBreathCue(breathSegments.length);
+        breathAdvanceTimeoutRef.current = null;
+      }, 450);
     },
   });
+
+  useEffect(() => {
+    const handleSpaceAdvance = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || event.repeat) {
+        return;
+      }
+
+      const target = event.target;
+      const isInteractiveTarget =
+        target instanceof HTMLElement &&
+        Boolean(
+          target.closest(
+            "input, textarea, select, button, a, [contenteditable='true']",
+          ),
+        );
+
+      if (isInteractiveTarget) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (hudMode === "breath") {
+        advanceBreathCueManually();
+      } else {
+        advanceKeywordManuallyRef.current();
+      }
+    };
+
+    window.addEventListener("keydown", handleSpaceAdvance);
+
+    return () => window.removeEventListener("keydown", handleSpaceAdvance);
+  }, [advanceBreathCueManually, hudMode]);
 
   useEffect(() => {
     let isActive = true;
@@ -200,6 +263,9 @@ export function PracticeScreen() {
       if (keywordFlashTimeoutRef.current !== null) {
         window.clearTimeout(keywordFlashTimeoutRef.current);
       }
+      if (breathAdvanceTimeoutRef.current !== null) {
+        window.clearTimeout(breathAdvanceTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -254,6 +320,8 @@ export function PracticeScreen() {
       transcriptTimeline: transcriptTimeline.timeline,
       keywordProgress: keywordProgress.getProgress(),
       cameraSnapshot: cameraSignals.getSummary(),
+      speechRecognitionConfidence: recognitionConfidence,
+      speechRecognitionError: recognitionError,
       soundCueEnabled: isSoundEnabled,
     });
 
@@ -279,6 +347,8 @@ export function PracticeScreen() {
         isListening={isListening}
         isSoundEnabled={isSoundEnabled}
         isSTTSupported={isSTTSupported}
+        recognitionConfidence={recognitionConfidence}
+        recognitionError={recognitionError}
         onComplete={handleCompletePractice}
         onToggleSound={toggleSound}
         title={session.title}
@@ -303,15 +373,18 @@ export function PracticeScreen() {
         elapsedSec={elapsedSec}
         hudMode={hudMode}
         isKeywordDetecting={isCurrentCardDetecting}
+        keywordCards={keywordCards}
         cameraAttentionScore={cameraSignals.snapshot.cameraAttentionScore}
         headStabilityScore={cameraSignals.snapshot.headStabilityScore}
         lookDownRatio={cameraSignals.snapshot.lookDownRatio}
         mouthMovementScore={cameraSignals.snapshot.mouthMovementScore}
-        onNextBreathCue={() => nextBreathCue(breathSegments.length)}
+        onNextBreathCue={advanceBreathCueManually}
         onNextKeyword={keywordProgress.advanceManually}
         pronunciationScore={liveScriptAssessment?.pronunciationScore ?? null}
+        recognitionConfidence={recognitionConfidence}
         scriptCoverageScore={liveScriptAssessment?.coverageScore ?? null}
         spokenKeywordCount={liveSpokenKeywordCount}
+        spokenText={detectionTranscript}
         subtitleLabel={subtitleText}
         targetDurationMin={session.targetDurationMin}
         title={session.title}

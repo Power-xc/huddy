@@ -36,7 +36,7 @@ export function useCameraSignalAnalysis(
   const statsRef = useRef<RunningStats>(createInitialStats());
   const isSamplingRef = useRef(false);
   const [snapshot, setSnapshot] = useState<CameraSignalSnapshot>(emptySnapshot);
-  const [sampleIntervalMs, setSampleIntervalMs] = useState(300);
+  const [sampleIntervalMs, setSampleIntervalMs] = useState(120);
 
   const getLandmarker = useCallback(async () => {
     if (statsRef.current.landmarkerFailed) return null;
@@ -91,7 +91,7 @@ export function useCameraSignalAnalysis(
   useEffect(() => {
     const updateInterval = () => {
       setSampleIntervalMs(
-        window.matchMedia("(max-width: 640px)").matches ? 450 : 300,
+        window.matchMedia("(max-width: 640px)").matches ? 180 : 120,
       );
     };
 

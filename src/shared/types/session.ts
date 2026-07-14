@@ -26,6 +26,7 @@ export type KeywordCard = {
 export type BreathSegment = {
   id: string;
   text: string;
+  translationKo: string | null;
   isBreathPoint: boolean;
 };
 
@@ -126,6 +127,7 @@ export type PracticeScriptAnalysis = {
 export type ScriptReadAloudAssessment = {
   coverageScore: number;
   pronunciationScore: number;
+  recognitionConfidence: number | null;
   matchedWordCount: number;
   totalWordCount: number;
   missedWords: string[];
@@ -164,6 +166,8 @@ export type PracticeSignalSummary = {
   lookDownRatio: number | null;
   readingPostureRiskScore: number | null;
   pauseRhythmScore: number | null;
+  speechRecognitionConfidence: number | null;
+  speechRecognitionError: string | null;
   scriptAssessment: ScriptReadAloudAssessment | null;
   cameraFeedback: string;
   mouthFeedback: string;
@@ -181,10 +185,11 @@ export type PracticeSession = {
   category: PracticeSessionCategory;
   mode: PresentationMode;
   focusAreas: FocusArea[];
-  targetDurationMin: 1 | 3 | 5 | 10;
+  targetDurationMin: number;
   weekNumber: number;
   memoKo: string;
   scriptText: string;
+  scriptTranslationKo: string;
   scriptAnalysis: PracticeScriptAnalysis | null;
   keywordCards: KeywordCard[];
   breathScript: BreathScript | null;

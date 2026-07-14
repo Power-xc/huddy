@@ -13,7 +13,9 @@ export type HUDOverlayProps = {
   elapsedSec?: number;
   targetDurationMin?: number;
   subtitleLabel?: string;
+  spokenText?: string;
   currentCard?: KeywordCard | null;
+  keywordCards?: KeywordCard[];
   currentKeywordIndex?: number;
   totalKeywords?: number;
   onNextKeyword?: () => void;
@@ -26,6 +28,7 @@ export type HUDOverlayProps = {
   spokenKeywordCount?: number;
   scriptCoverageScore?: number | null;
   pronunciationScore?: number | null;
+  recognitionConfidence?: number | null;
   hudMode?: "keyword" | "breath";
   breathSegments?: BreathSegment[];
   currentBreathCueIndex?: number;
@@ -40,7 +43,9 @@ export function HUDOverlay({
   elapsedSec,
   targetDurationMin,
   subtitleLabel = "subtitle placeholder",
+  spokenText = "",
   currentCard,
+  keywordCards,
   currentKeywordIndex = 0,
   totalKeywords,
   onNextKeyword,
@@ -53,6 +58,7 @@ export function HUDOverlay({
   spokenKeywordCount,
   scriptCoverageScore,
   pronunciationScore,
+  recognitionConfidence,
   hudMode,
   breathSegments,
   currentBreathCueIndex = 0,
@@ -85,8 +91,11 @@ export function HUDOverlay({
           <HUDBreathCue
             allCompleted={allBreathCuesCompleted}
             currentIndex={currentBreathCueIndex}
+            currentKeywordIndex={currentKeywordIndex}
+            keywordCards={keywordCards ?? []}
             onNext={onNextBreathCue ?? (() => undefined)}
             segments={activeBreathSegments}
+            spokenText={spokenText}
           />
         ) : shouldRenderKeywordCard ? (
           <HUDKeywordCard
@@ -116,9 +125,11 @@ export function HUDOverlay({
           right: "var(--hud-safe-x)",
         }}
       >
-        <div className="mx-auto w-[min(560px,100%)]">
-          <HUDSubtitle label={subtitleLabel} />
-        </div>
+        {!showBreathMode && (
+          <div className="mx-auto w-[min(560px,100%)]">
+            <HUDSubtitle label={subtitleLabel} />
+          </div>
+        )}
         <div className="flex items-end justify-between gap-2">
           {elapsedSec === undefined ? (
             <GlassCard className="px-3 py-2 sm:px-4 sm:py-3">
@@ -138,6 +149,7 @@ export function HUDOverlay({
             lookDownRatio={lookDownRatio}
             mouthMovementScore={mouthMovementScore}
             pronunciationScore={pronunciationScore}
+            recognitionConfidence={recognitionConfidence}
             scriptCoverageScore={scriptCoverageScore}
             spokenKeywordCount={spokenKeywordCount}
           />

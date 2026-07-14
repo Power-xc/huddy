@@ -19,6 +19,8 @@ type CreatePracticeSignalsInput = {
   transcriptTimeline: TranscriptTimelineItem[];
   keywordProgress: KeywordRouteProgressItem[];
   cameraSnapshot: CameraSignalSnapshot;
+  speechRecognitionConfidence: number | null;
+  speechRecognitionError: string | null;
   soundCueEnabled: boolean;
 };
 
@@ -66,6 +68,8 @@ export function createPracticeSignals({
   transcriptTimeline,
   keywordProgress,
   cameraSnapshot,
+  speechRecognitionConfidence,
+  speechRecognitionError,
   soundCueEnabled,
 }: CreatePracticeSignalsInput): PracticeSignalSummary {
   const cleanTranscript = transcript.trim();
@@ -75,7 +79,11 @@ export function createPracticeSignals({
   const { matchedRouteKeywords, missedRouteKeywords } =
     getRouteKeywordProgress(cleanTranscript, keywordCards);
   const pauseRhythm = getPauseRhythm(transcriptTimeline);
-  const scriptAssessment = assessScriptReadAloud(scriptText, cleanTranscript);
+  const scriptAssessment = assessScriptReadAloud(
+    scriptText,
+    cleanTranscript,
+    speechRecognitionConfidence,
+  );
 
   return {
     spokenKeywords,
@@ -96,6 +104,8 @@ export function createPracticeSignals({
     lookDownRatio: cameraSnapshot.lookDownRatio,
     readingPostureRiskScore: cameraSnapshot.readingPostureRiskScore,
     pauseRhythmScore: pauseRhythm.pauseRhythmScore,
+    speechRecognitionConfidence,
+    speechRecognitionError,
     scriptAssessment,
     cameraFeedback: cameraSnapshot.cameraFeedback,
     mouthFeedback: cameraSnapshot.mouthFeedback,

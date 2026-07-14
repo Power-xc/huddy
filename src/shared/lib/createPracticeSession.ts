@@ -38,6 +38,7 @@ export function createPracticeSession({
     weekNumber,
     memoKo: "",
     scriptText: "",
+    scriptTranslationKo: "",
     scriptAnalysis: null,
     keywordCards: [],
     breathScript: null,

@@ -93,7 +93,7 @@ export function ScriptInsightPanel({
         <div>
           <p className="text-sm text-text-secondary">중요 키워드</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {analysis.keywords.map((keyword) => (
+            {analysis.keywords.slice(0, 8).map((keyword) => (
               <span
                 className="rounded-full border border-border px-3 py-1 font-mono text-sm text-text-secondary"
                 key={keyword.term}

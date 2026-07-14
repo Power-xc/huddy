@@ -3,6 +3,7 @@ import type {
   PracticeSignalSummary,
   SpokenKeywordInsight,
 } from "@shared/types";
+import { normalizeSpeechText, titleCase } from "@shared/lib/text";
 import { detectKeyword } from "./detectKeyword";
 
 const stopWords = new Set([
@@ -36,22 +37,9 @@ const stopWords = new Set([
   "you",
 ]);
 
-const normalize = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^\w\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const titleCase = (value: string): string =>
-  value
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
 const countRouteKeyword = (transcript: string, keyword: string): number => {
-  const normalizedTranscript = normalize(transcript);
-  const normalizedKeyword = normalize(keyword);
+  const normalizedTranscript = normalizeSpeechText(transcript);
+  const normalizedKeyword = normalizeSpeechText(keyword);
 
   if (!normalizedTranscript || !normalizedKeyword) {
     return 0;
@@ -73,7 +61,7 @@ export function extractSpokenKeywords(
   transcript: string,
   routeCards: KeywordCard[],
 ): SpokenKeywordInsight[] {
-  const normalizedTranscript = normalize(transcript);
+  const normalizedTranscript = normalizeSpeechText(transcript);
 
   if (!normalizedTranscript) {
     return [];
@@ -96,7 +84,7 @@ export function extractSpokenKeywords(
   routeCards.forEach((card) => {
     const routeCount = countRouteKeyword(transcript, card.keyword);
     if (routeCount > 0) {
-      counts.set(normalize(card.keyword), routeCount + 2);
+      counts.set(normalizeSpeechText(card.keyword), routeCount + 2);
     }
   });
 

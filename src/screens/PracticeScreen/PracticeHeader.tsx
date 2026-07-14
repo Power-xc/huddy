@@ -5,6 +5,8 @@ export type PracticeHeaderProps = {
   isListening: boolean;
   isSoundEnabled: boolean;
   isSTTSupported: boolean;
+  recognitionConfidence: number | null;
+  recognitionError: string | null;
   onComplete: () => void;
   onToggleSound: () => void;
 };
@@ -14,6 +16,8 @@ export function PracticeHeader({
   isListening,
   isSoundEnabled,
   isSTTSupported,
+  recognitionConfidence,
+  recognitionError,
   onComplete,
   onToggleSound,
 }: PracticeHeaderProps) {
@@ -23,7 +27,7 @@ export function PracticeHeader({
         <p className="shrink-0 rounded-full border border-border px-3 py-1.5 text-sm font-semibold text-primary sm:px-4 sm:py-2">
           Practice
         </p>
-        {isSTTSupported && (
+        {isSTTSupported ? (
           <span
             className={[
               "rounded-full border px-3 py-1 font-mono text-xs transition-colors",
@@ -31,9 +35,17 @@ export function PracticeHeader({
                 ? "border-primary text-primary"
                 : "border-border text-text-muted",
             ].join(" ")}
-            title={isListening ? "마이크 인식 중" : "마이크 대기"}
+            title={recognitionError ?? (isListening ? "마이크 인식 중" : "마이크 대기")}
           >
-            {isListening ? "MIC LIVE" : "MIC IDLE"}
+            {recognitionError
+              ? "MIC ERROR"
+              : isListening
+                ? `MIC ${recognitionConfidence ?? "LIVE"}`
+                : "MIC IDLE"}
+          </span>
+        ) : (
+          <span className="rounded-full border border-border px-3 py-1 font-mono text-xs text-text-muted">
+            MIC UNSUPPORTED
           </span>
         )}
         <Button onClick={onToggleSound} size="sm" variant="ghost">

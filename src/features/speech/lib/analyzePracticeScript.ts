@@ -6,6 +6,7 @@ import type {
   ScriptVocabularyInsight,
   ScriptVocabularyRisk,
 } from "@shared/types";
+import { titleCase } from "@shared/lib/text";
 
 const stopWords = new Set([
   "a",
@@ -56,12 +57,6 @@ const clamp = (value: number, min: number, max: number): number =>
 
 const tokenize = (value: string): string[] =>
   (value.toLowerCase().match(/[a-z]+/g) ?? []).filter(Boolean);
-
-const titleCase = (value: string): string =>
-  value
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
 
 const isContentWord = (word: string): boolean =>
   word.length >= 4 && !stopWords.has(word);
@@ -133,7 +128,7 @@ const buildKeywords = (words: string[]): ScriptKeywordInsight[] => {
       selectedTerms.add(candidate.term);
       return true;
     })
-    .slice(0, 8)
+    .slice(0, 24)
     .map((candidate) => ({
       term: titleCase(candidate.term),
       count: candidate.count,
@@ -342,6 +337,7 @@ const hasSpokenWord = (targetWord: string, spokenWords: string[]): boolean =>
 export function assessScriptReadAloud(
   scriptText: string,
   transcript: string,
+  recognitionConfidence: number | null = null,
 ): ScriptReadAloudAssessment | null {
   const scriptWords = tokenize(scriptText);
 
@@ -374,7 +370,11 @@ export function assessScriptReadAloud(
       ? Math.round((recognizedVocabularyCount / vocabularyTargets.length) * 100)
       : coverageScore;
   const pronunciationScore = Math.round(
-    coverageScore * 0.55 + vocabularyScore * 0.45,
+    recognitionConfidence === null
+      ? coverageScore * 0.55 + vocabularyScore * 0.45
+      : recognitionConfidence * 0.45 +
+          vocabularyScore * 0.35 +
+          coverageScore * 0.2,
   );
   const missedWords = getMissedWords(scriptWords, matched);
   const missedSet = new Set(missedWords.map((word) => word.toLowerCase()));
@@ -394,6 +394,7 @@ export function assessScriptReadAloud(
   return {
     coverageScore,
     pronunciationScore,
+    recognitionConfidence,
     matchedWordCount,
     totalWordCount: scriptWords.length,
     missedWords,

@@ -6,6 +6,8 @@ import type {
   SessionReport,
 } from "@shared/types";
 import { analyzePracticeScript } from "@features/speech";
+import { buildBreathScript } from "@shared/lib/buildBreathScript";
+import { getKeywordCardCount } from "@shared/lib/getKeywordCardCount";
 import type { AICoachAdapter } from "./aiCoachAdapter";
 
 type KeywordSeed = {
@@ -53,46 +55,80 @@ const keywordSeeds: Record<PracticeSessionCategory, KeywordSeed[]> = {
   ],
 };
 
-const chunkScriptText = (scriptText: string): string[] =>
-  scriptText
-    .split(/[.!?]+/)
-    .flatMap((sentence) => {
-      const words = sentence
-        .replace(/[^\w\s,']/g, "")
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-      const chunks: string[] = [];
+const expansionSeeds: KeywordSeed[] = [
+  { keyword: "Purpose", hintKo: "발표 목적" },
+  { keyword: "Audience", hintKo: "청중과 기대" },
+  { keyword: "Background", hintKo: "필요한 배경" },
+  { keyword: "Current State", hintKo: "현재 상황" },
+  { keyword: "Challenge", hintKo: "핵심 과제" },
+  { keyword: "Root Cause", hintKo: "문제의 원인" },
+  { keyword: "Key Insight", hintKo: "중요한 발견" },
+  { keyword: "Data", hintKo: "수치와 근거" },
+  { keyword: "Example", hintKo: "구체적인 사례" },
+  { keyword: "Approach", hintKo: "접근 방법" },
+  { keyword: "Alternative", hintKo: "다른 선택지" },
+  { keyword: "Recommendation", hintKo: "추천 방향" },
+  { keyword: "Benefit", hintKo: "기대 효과" },
+  { keyword: "Risk", hintKo: "예상 위험" },
+  { keyword: "Mitigation", hintKo: "위험 대응" },
+  { keyword: "Timeline", hintKo: "진행 일정" },
+  { keyword: "Milestone", hintKo: "중간 목표" },
+  { keyword: "Owner", hintKo: "담당과 역할" },
+  { keyword: "Resources", hintKo: "필요 자원" },
+  { keyword: "Success Metric", hintKo: "성공 기준" },
+  { keyword: "Call To Action", hintKo: "청중의 행동" },
+  { keyword: "Summary", hintKo: "핵심 요약" },
+  { keyword: "Questions", hintKo: "질문과 답변" },
+  { keyword: "Closing Message", hintKo: "마지막 메시지" },
+  { keyword: "Next Step", hintKo: "바로 실행할 일" },
+];
 
-      for (let index = 0; index < words.length; index += 10) {
-        chunks.push(words.slice(index, index + 10).join(" "));
+const takeUniqueSeeds = (
+  seeds: KeywordSeed[],
+  count: number,
+): KeywordSeed[] => {
+  const usedKeywords = new Set<string>();
+
+  return seeds
+    .filter((seed) => {
+      const normalizedKeyword = seed.keyword.toLowerCase();
+
+      if (usedKeywords.has(normalizedKeyword)) {
+        return false;
       }
 
-      return chunks;
+      usedKeywords.add(normalizedKeyword);
+      return true;
     })
-    .filter((segment) => segment.length > 0)
-    .slice(0, 10);
+    .slice(0, count);
+};
 
 export class MockAiCoachAdapter implements AICoachAdapter {
   async generateKeywordCards(
     memoKo: string,
     category: PracticeSessionCategory,
     scriptText = "",
+    targetDurationMin = 3,
   ): Promise<KeywordCard[]> {
     await wait(300);
 
     const hasMemo = memoKo.trim().length > 0;
     const scriptKeywords = analyzePracticeScript(scriptText)?.keywords ?? [];
+    const keywordCount = getKeywordCardCount(
+      scriptText,
+      targetDurationMin,
+    );
 
     if (scriptKeywords.length > 0) {
-      const scriptedSeeds = scriptKeywords.slice(0, 6).map((keyword) => ({
+      const scriptedSeeds = scriptKeywords.map((keyword) => ({
         keyword: keyword.term,
         hintKo: keyword.reasonKo.slice(0, 20),
       }));
-      const mergedSeeds = [
+      const mergedSeeds = takeUniqueSeeds([
         ...scriptedSeeds,
-        ...keywordSeeds[category].slice(scriptedSeeds.length),
-      ].slice(0, 6);
+        ...keywordSeeds[category],
+        ...expansionSeeds,
+      ], keywordCount);
 
       return mergedSeeds.map((seed, index) => ({
         id: crypto.randomUUID(),
@@ -103,7 +139,10 @@ export class MockAiCoachAdapter implements AICoachAdapter {
       }));
     }
 
-    return keywordSeeds[category].map((seed, index) => ({
+    return takeUniqueSeeds(
+      [...keywordSeeds[category], ...expansionSeeds],
+      keywordCount,
+    ).map((seed, index) => ({
       id: crypto.randomUUID(),
       order: index + 1,
       keyword: seed.keyword,
@@ -116,22 +155,14 @@ export class MockAiCoachAdapter implements AICoachAdapter {
     memoKo: string,
     keywordCards: KeywordCard[],
     scriptText = "",
+    scriptTranslationKo = "",
   ): Promise<BreathScript> {
     await wait(300);
 
-    const scriptSegments = chunkScriptText(scriptText);
+    const fullScript = buildBreathScript(scriptText, scriptTranslationKo);
 
-    if (scriptSegments.length > 0) {
-      const segments = scriptSegments.map((text, index) => ({
-        id: crypto.randomUUID(),
-        text,
-        isBreathPoint: index > 0 && index % 2 === 0,
-      }));
-
-      return {
-        segments,
-        fullText: segments.map((segment) => segment.text).join(" / "),
-      };
+    if (fullScript) {
+      return fullScript;
     }
 
     const fallbackText =
@@ -148,6 +179,7 @@ export class MockAiCoachAdapter implements AICoachAdapter {
     const segments = fullText.split(" / ").map((text, index) => ({
       id: crypto.randomUUID(),
       text,
+      translationKo: null,
       isBreathPoint: index > 0,
     }));
 
@@ -155,6 +187,10 @@ export class MockAiCoachAdapter implements AICoachAdapter {
       segments,
       fullText,
     };
+  }
+
+  async translateScript(): Promise<string> {
+    throw new Error("AI translation is not configured");
   }
 
   async generateReport(session: PracticeSession): Promise<SessionReport> {

@@ -100,7 +100,7 @@ function MouthLineOverlay({
 }) {
   const displayShape = useMemo(
     () =>
-      mouthShape && videoMetrics
+      mouthShape && mouthShape.confidence >= 60 && videoMetrics
         ? mapMouthShape(mouthShape, videoMetrics, isMirrored)
         : null,
     [isMirrored, mouthShape, videoMetrics],
@@ -346,7 +346,9 @@ export function CameraPreview({
             ].join(" ")}
           />
           <span className="font-mono text-xs uppercase text-primary">
-            {mouthShape ? "Lip line tracking" : "Speaking signals active"}
+            {mouthShape
+              ? `Lip tracking ${mouthShape.confidence}%`
+              : "Speaking signals active"}
           </span>
         </div>
       </div>
@@ -354,7 +356,7 @@ export function CameraPreview({
         {[
           "CAM",
           `MOUTH ${typeof mouthMovementScore === "number" ? `${mouthMovementScore}%` : "--"}`,
-          mouthShape ? "LIP ON" : "LIP WAIT",
+          mouthShape ? `LIP ${mouthShape.confidence}%` : "LIP WAIT",
           "HEAD",
         ].map((label) => (
           <span

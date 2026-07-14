@@ -105,6 +105,42 @@ const toMouthPoints = (
     .filter((point): point is NormalizedLandmark => point !== null)
     .map((point) => ({ x: point.x, y: point.y }));
 
+const smoothMouthPoints = (
+  previous: MouthLandmarkPoint[],
+  current: MouthLandmarkPoint[],
+): MouthLandmarkPoint[] =>
+  current.map((point, index) => {
+    const previousPoint = previous[index];
+
+    if (!previousPoint) {
+      return point;
+    }
+
+    return {
+      x: previousPoint.x * 0.55 + point.x * 0.45,
+      y: previousPoint.y * 0.55 + point.y * 0.45,
+    };
+  });
+
+const isValidMouthGeometry = (
+  mouthWidth: number,
+  mouthOpenRatio: number,
+  outer: MouthLandmarkPoint[],
+  inner: MouthLandmarkPoint[],
+): boolean =>
+  mouthWidth >= 0.04 &&
+  mouthWidth <= 0.35 &&
+  mouthOpenRatio <= 0.9 &&
+  [...outer, ...inner].every(
+    (point) =>
+      Number.isFinite(point.x) &&
+      Number.isFinite(point.y) &&
+      point.x >= 0 &&
+      point.x <= 1 &&
+      point.y >= 0 &&
+      point.y <= 1,
+  );
+
 const blendScore = (result: FaceLandmarkerResult, names: string[]): number => {
   const categories = result.faceBlendshapes[0]?.categories ?? [];
 
@@ -286,14 +322,23 @@ export const applyLandmarkSample = (
 
     if (
       outer.length === outerMouthIndices.length &&
-      inner.length === innerMouthIndices.length
+      inner.length === innerMouthIndices.length &&
+      isValidMouthGeometry(mouthWidth, mouthOpenRatio, outer, inner)
     ) {
+      const previousShape = stats.mouthShape;
+
       stats.mouthShape = {
-        outer,
-        inner,
+        outer: previousShape
+          ? smoothMouthPoints(previousShape.outer, outer)
+          : outer,
+        inner: previousShape
+          ? smoothMouthPoints(previousShape.inner, inner)
+          : inner,
         opennessScore: clampScore(mouthOpenRatio * 400),
-        confidence: 100,
+        confidence: 95,
       };
+    } else {
+      stats.mouthShape = null;
     }
   }
 

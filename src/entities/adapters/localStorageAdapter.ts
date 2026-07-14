@@ -25,9 +25,14 @@ const isPracticeSession = (value: unknown): value is PracticeSession => {
     typeof value.mode === "string" &&
     Array.isArray(value.focusAreas) &&
     typeof value.targetDurationMin === "number" &&
+    Number.isFinite(value.targetDurationMin) &&
+    value.targetDurationMin >= 1 &&
+    value.targetDurationMin <= 120 &&
     typeof value.weekNumber === "number" &&
     typeof value.memoKo === "string" &&
     (value.scriptText === undefined || typeof value.scriptText === "string") &&
+    (value.scriptTranslationKo === undefined ||
+      typeof value.scriptTranslationKo === "string") &&
     (value.scriptAnalysis === undefined ||
       typeof value.scriptAnalysis === "object" ||
       value.scriptAnalysis === null) &&
@@ -66,6 +71,7 @@ export class LocalStorageAdapter implements StorageAdapter {
       (session) => ({
         ...session,
         scriptText: session.scriptText ?? "",
+        scriptTranslationKo: session.scriptTranslationKo ?? "",
         scriptAnalysis: session.scriptAnalysis ?? null,
         transcript: session.transcript ?? null,
         practiceSignals: session.practiceSignals ?? null,

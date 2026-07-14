@@ -19,11 +19,16 @@ type KeywordResponse = {
 
 type BreathSegmentDraft = {
   text: string;
+  translationKo?: string | null;
   isBreathPoint: boolean;
 };
 
 type BreathScriptResponse = {
   segments: BreathSegmentDraft[];
+};
+
+type TranslationResponse = {
+  translationKo: string;
 };
 
 type ReportResponse = Omit<
@@ -47,6 +52,9 @@ const isKeywordResponse = (value: unknown): value is KeywordResponse =>
 const isBreathSegmentDraft = (value: unknown): value is BreathSegmentDraft =>
   isRecord(value) &&
   typeof value.text === "string" &&
+  (value.translationKo === undefined ||
+    value.translationKo === null ||
+    typeof value.translationKo === "string") &&
   typeof value.isBreathPoint === "boolean";
 
 const isBreathScriptResponse = (
@@ -55,6 +63,9 @@ const isBreathScriptResponse = (
   isRecord(value) &&
   Array.isArray(value.segments) &&
   value.segments.every(isBreathSegmentDraft);
+
+const isTranslationResponse = (value: unknown): value is TranslationResponse =>
+  isRecord(value) && typeof value.translationKo === "string";
 
 const modes: PresentationMode[] = ["script", "breath", "keyword", "no-script"];
 
@@ -111,10 +122,11 @@ export class RealAiCoachAdapter implements AICoachAdapter {
     memoKo: string,
     category: PracticeSessionCategory,
     scriptText = "",
+    targetDurationMin = 3,
   ): Promise<KeywordCard[]> {
     const data = await postJson(
       "/api/ai/keywords",
-      { memoKo, category, scriptText },
+      { memoKo, category, scriptText, targetDurationMin },
       isKeywordResponse,
       "keyword generation failed",
     );
@@ -132,16 +144,23 @@ export class RealAiCoachAdapter implements AICoachAdapter {
     memoKo: string,
     keywordCards: KeywordCard[],
     scriptText = "",
+    scriptTranslationKo = "",
   ): Promise<BreathScript> {
     const data = await postJson(
       "/api/ai/breath-script",
-      { memoKo, keywords: keywordCards.map((card) => card.keyword), scriptText },
+      {
+        memoKo,
+        keywords: keywordCards.map((card) => card.keyword),
+        scriptText,
+        scriptTranslationKo,
+      },
       isBreathScriptResponse,
       "breath script generation failed",
     );
     const segments = data.segments.map((segment) => ({
       id: crypto.randomUUID(),
       text: segment.text,
+      translationKo: segment.translationKo?.trim() || null,
       isBreathPoint: segment.isBreathPoint,
     }));
 
@@ -149,6 +168,17 @@ export class RealAiCoachAdapter implements AICoachAdapter {
       segments,
       fullText: segments.map((segment) => segment.text).join(" / "),
     };
+  }
+
+  async translateScript(scriptText: string): Promise<string> {
+    const data = await postJson(
+      "/api/ai/translate",
+      { scriptText },
+      isTranslationResponse,
+      "script translation failed",
+    );
+
+    return data.translationKo;
   }
 
   async generateReport(session: PracticeSession): Promise<SessionReport> {
@@ -221,7 +251,8 @@ export class RealAiCoachAdapter implements AICoachAdapter {
     return {
       ...data,
       actualDurationSec,
-      keywordsUsedCount: 0,
+      keywordsUsedCount: session.keywordCards.filter((card) => card.isUsed)
+        .length,
       createdAt: new Date().toISOString(),
     };
   }

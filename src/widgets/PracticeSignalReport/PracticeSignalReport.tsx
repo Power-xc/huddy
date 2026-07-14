@@ -34,7 +34,7 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
         <p className="text-sm font-medium text-primary">Practice signals</p>
         <h2 className="mt-2 text-xl font-semibold text-text">실전 신호 분석</h2>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <div>
           <p className="text-sm text-text-secondary">스크립트 매칭</p>
           <p className="mt-2 font-mono text-2xl font-semibold text-primary">
@@ -45,7 +45,20 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
           </p>
         </div>
         <div>
-          <p className="text-sm text-text-secondary">발음 인식</p>
+          <p className="text-sm text-text-secondary">음성 인식 신뢰도</p>
+          <p className="mt-2 font-mono text-2xl font-semibold text-primary">
+            {formatOptionalScore(
+              signals.speechRecognitionConfidence ??
+                scriptAssessment?.recognitionConfidence,
+            )}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-text-secondary">
+            {signals.speechRecognitionError ??
+              "브라우저가 받아쓴 영어 음성의 평균 신뢰도입니다."}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-text-secondary">발음 명료도 추정</p>
           <p className="mt-2 font-mono text-2xl font-semibold text-primary">
             {formatOptionalScore(scriptAssessment?.pronunciationScore)}
           </p>
@@ -56,6 +69,10 @@ export function PracticeSignalReport({ signals }: PracticeSignalReportProps) {
           </p>
         </div>
       </div>
+      <p className="text-xs leading-5 text-text-muted">
+        발음 명료도는 음성 인식 신뢰도, 원문 매칭, 핵심 단어 인식을 합친
+        연습용 추정치이며 정밀 음소 분석 결과는 아닙니다.
+      </p>
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <p className="text-sm text-text-secondary">시선/카메라 방향</p>

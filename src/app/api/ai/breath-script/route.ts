@@ -1,13 +1,16 @@
 import {
   memoKoMaxLength,
+  scriptTranslationKoMaxLength,
   scriptTextMaxLength,
 } from "@shared/config/practiceLimits";
+import { buildBreathScript } from "@shared/lib/buildBreathScript";
 import { createClaudeJsonText } from "../_lib/anthropicClient";
 import { isRecord, jsonError, parseJsonText } from "../_lib/json";
 import { guardAiRequest } from "../_lib/requestGuard";
 
 type BreathSegmentDraft = {
   text: string;
+  translationKo?: string | null;
   isBreathPoint: boolean;
 };
 
@@ -15,6 +18,7 @@ type BreathScriptRequestBody = {
   memoKo: string;
   keywords: string[];
   scriptText?: string;
+  scriptTranslationKo?: string;
 };
 
 const isRequestBody = (value: unknown): value is BreathScriptRequestBody => {
@@ -24,17 +28,24 @@ const isRequestBody = (value: unknown): value is BreathScriptRequestBody => {
 
   const scriptText =
     typeof value.scriptText === "string" ? value.scriptText : "";
+  const scriptTranslationKo =
+    typeof value.scriptTranslationKo === "string"
+      ? value.scriptTranslationKo
+      : "";
 
   return (
     value.memoKo.length <= memoKoMaxLength &&
     scriptText.length <= scriptTextMaxLength &&
+    scriptTranslationKo.length <= scriptTranslationKoMaxLength &&
     Array.isArray(value.keywords) &&
     value.keywords.length > 0 &&
-    value.keywords.length <= 12 &&
+    value.keywords.length <= 24 &&
     value.keywords.every(
       (keyword) => typeof keyword === "string" && keyword.length <= 80,
     ) &&
-    (value.scriptText === undefined || typeof value.scriptText === "string")
+    (value.scriptText === undefined || typeof value.scriptText === "string") &&
+    (value.scriptTranslationKo === undefined ||
+      typeof value.scriptTranslationKo === "string")
   );
 };
 
@@ -44,14 +55,17 @@ const isBreathSegmentDraft = (
   isRecord(value) &&
   typeof value.text === "string" &&
   value.text.trim().length > 0 &&
+  (value.translationKo === undefined ||
+    value.translationKo === null ||
+    typeof value.translationKo === "string") &&
   typeof value.isBreathPoint === "boolean";
 
 const isBreathSegmentDraftArray = (
   value: unknown,
 ): value is BreathSegmentDraft[] =>
   Array.isArray(value) &&
-  value.length >= 4 &&
-  value.length <= 12 &&
+  value.length >= 1 &&
+  value.length <= 250 &&
   value.every(isBreathSegmentDraft);
 
 const buildPrompt = ({
@@ -94,6 +108,21 @@ export async function POST(request: Request): Promise<Response> {
     return jsonError("Invalid request body", 400);
   }
 
+  const fullScript = buildBreathScript(
+    body.scriptText ?? "",
+    body.scriptTranslationKo ?? "",
+  );
+
+  if (fullScript) {
+    return Response.json({
+      segments: fullScript.segments.map(({ text, translationKo, isBreathPoint }) => ({
+        text,
+        translationKo,
+        isBreathPoint,
+      })),
+    });
+  }
+
   try {
     const text = await createClaudeJsonText({
       model: "claude-haiku-4-5-20251001",
@@ -108,7 +137,12 @@ export async function POST(request: Request): Promise<Response> {
       return jsonError("Invalid AI response", 500);
     }
 
-    return Response.json({ segments: parsedResponse });
+    return Response.json({
+      segments: parsedResponse.map((segment) => ({
+        ...segment,
+        translationKo: null,
+      })),
+    });
   } catch (error) {
     console.error("Breath script generation failed.", error);
     return jsonError("Breath script generation failed", 500);
