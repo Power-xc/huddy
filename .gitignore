@@ -43,3 +43,13 @@ next-env.d.ts
 
 # review artifacts
 review-screenshots/
+/report/
+
+# local planning and working docs (kept out of the repo)
+/AGENTS.md
+/CLAUDE.md
+/MASTER_PLAN.md
+/HUDdy_CONTEXT.md
+/SPEC.md
+/BRAND_GUIDE.md
+/skills/
